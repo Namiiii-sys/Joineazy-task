@@ -7,6 +7,8 @@ const App = () => {
   return (
     <div>
       <Auth />
+      <TeacherDashboard/>
+
 
     </div>
   )
