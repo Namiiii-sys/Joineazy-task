@@ -1,56 +1,59 @@
-// src/components/Sidebar.jsx
 import React from "react";
-import { Home, Users, FileText, BarChart2, LogOut } from "lucide-react";
+import { Home, Users, FileText, BarChart2, LogOut, User } from "lucide-react";
 
-export default function Sidebar({ role }) {
+export default function Sidebar({ role, activeTab, setActiveTab, onLogout }) {
+  // student sidebar links
   const studentLinks = [
-    { name: "Dashboard", icon: <Home size={18} /> },
-    { name: "My Group", icon: <Users size={18} /> },
-    { name: "Assignments", icon: <FileText size={18} /> },
-    { name: "Progress", icon: <BarChart2 size={18} /> },
+    { name: "Assignments", icon: <FileText size={18} />, key: "assignments" },
+    { name: "My Team", icon: <Users size={18} />, key: "team" },
+    { name: "Profile", icon: <User size={18} />, key: "profile" },
   ];
 
+  // teacher sidebar links
   const adminLinks = [
-    { name: "Dashboard", icon: <Home size={18} /> },
-    { name: "Assignments", icon: <FileText size={18} /> },
-    { name: "Submissions", icon: <Users size={18} /> },
-    { name: "Analytics", icon: <BarChart2 size={18} /> },
+    { name: "Assignments", icon: <FileText size={18} />, key: "assignments" },
+    { name: "Group Info", icon: <Users size={18} />, key: "groups" },
+    { name: "Profile", icon: <User size={18} />, key: "profile" },
   ];
 
   const links = role === "admin" ? adminLinks : studentLinks;
-  const onLogout = () => {
-    // Optionally clear storage here if not already cleared by the button handler
-    // window.localStorage.clear();
-    window.location.href = "/login";
-  };
 
   return (
     <div className="h-screen w-60 bg-white shadow-lg flex flex-col justify-between">
       <div>
-        <div className="p-7 text-4xl font-bold text-blue-600">Joineazy</div>
+        <div className="p-6 text-3xl font-bold text-blue-600">Joineazy</div>
+
+        {/* Navigation Links */}
         <nav className="mt-6">
           {links.map((link) => (
             <div
-              key={link.name}
-              className="flex items-center gap-3 p-7 text-gray-700 hover:bg-blue-50 cursor-pointer"
+              key={link.key}
+              onClick={() => setActiveTab(link.key)}
+              className={`flex items-center gap-3 p-5 text-gray-700 cursor-pointer hover:bg-blue-50 transition ${
+                activeTab === link.key
+                  ? "bg-blue-100 text-blue-600 font-semibold"
+                  : ""
+              }`}
             >
               {link.icon}
-              {link.name}
+              <span>{link.name}</span>
             </div>
           ))}
         </nav>
       </div>
-        <button
-        onClick={() => {
-          localStorage.clear();
-          onLogout();
-        }}
-        className="bg-white text-blue-900 font-semibold px-4 py-2 rounded hover:bg-gray-200 transition mt-8"
-      >
-        Logout
-      </button>
 
-      
+      <div className="p-6 border-t">
+        <button
+          onClick={() => {
+            localStorage.clear();
+            if (onLogout) onLogout();
+          }}
+          className="flex gap-2 text-blue-600 hover:text-blue-800 transition"
+        >
+          <LogOut size={18} />
+          <span>Logout</span>
+        </button>
+      </div>
     </div>
   );
 }

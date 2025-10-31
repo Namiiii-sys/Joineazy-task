@@ -1,117 +1,148 @@
-import React from "react";
+import React, { useState } from "react";
 import Sidebar from "../components/Sidebar";
-import { BookOpen, CalendarDays, CheckCircle2 } from "lucide-react";
+import { BookOpen, Users, User } from "lucide-react";
 
 export default function StudentDashboard() {
+  const [activeTab, setActiveTab] = useState("assignments");
+  const [groupCode, setGroupCode] = useState("");
+  const [groupCreatedCode, setGroupCreatedCode] = useState("");
+
   const assignments = [
-    {
-      id: 1,
-      title: "Database Design",
-      dueDate: "2025-11-03",
-      status: "Submitted",
-      grade: "A",
-    },
-    {
-      id: 2,
-      title: "Frontend Module",
-      dueDate: "2025-11-10",
-      status: "Pending",
-      grade: "-",
-    },
+    { id: 1, title: "Database Design", dueDate: "2025-11-03", status: "Pending" },
+    { id: 2, title: "Frontend Module", dueDate: "2025-11-10", status: "Locked (Group not ready)" },
   ];
 
-  
+  // handle create group (mock for now)
+  const handleCreateGroup = () => {
+    const randomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+    setGroupCreatedCode(randomCode);
+    alert(`Group created successfully! Share this code with your teammates: ${randomCode}`);
+  };
+
+  // handle join group (mock)
+  const handleJoinGroup = () => {
+    if (!groupCode.trim()) {
+      alert("Please enter a valid group code!");
+      return;
+    }
+    alert(`Joined group with code: ${groupCode}`);
+    setGroupCode("");
+  };
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case "assignments":
+        return (
+          <div>
+            <h2 className="text-2xl font-semibold mb-4 text-blue-700 flex items-center">
+              <BookOpen className="mr-2" /> My Assignments
+            </h2>
+
+            <table className="w-full bg-white rounded-lg shadow">
+              <thead className="bg-blue-50 text-gray-700 font-semibold">
+                <tr>
+                  <th className="p-3 text-left">Title</th>
+                  <th className="p-3 text-left">Due Date</th>
+                  <th className="p-3 text-left">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {assignments.map((a) => (
+                  <tr key={a.id} className="border-b hover:bg-gray-50">
+                    <td className="p-3">{a.title}</td>
+                    <td className="p-3">{a.dueDate}</td>
+                    <td className="p-3 text-blue-600">{a.status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        );
+
+      case "team":
+        return (
+          <div>
+            <h2 className="text-2xl font-semibold mb-4 text-blue-700 flex items-center">
+              <Users className="mr-2" /> My Team
+            </h2>
+
+            {/* Create Group Section */}
+            <div className="bg-white rounded-lg shadow p-5 mb-6">
+              <h3 className="text-lg font-semibold mb-3">Create a New Group</h3>
+              <button
+                onClick={handleCreateGroup}
+                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
+              >
+                Create Group
+              </button>
+
+              {groupCreatedCode && (
+                <div className="mt-4">
+                  <p className="text-gray-700">
+                    <strong>Group Code:</strong> {groupCreatedCode}
+                  </p>
+                  <p className="text-gray-600 text-sm">
+                    Share this code with your teammates so they can join.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Join Group Section */}
+            <div className="bg-white rounded-lg shadow p-5">
+              <h3 className="text-lg font-semibold mb-3">Join an Existing Group</h3>
+              <input
+                type="text"
+                placeholder="Enter Group Code"
+                value={groupCode}
+                onChange={(e) => setGroupCode(e.target.value)}
+                className="border border-gray-300 p-2 rounded w-1/2 focus:outline-none focus:border-blue-400"
+              />
+              <button
+                onClick={handleJoinGroup}
+                className="ml-3 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition"
+              >
+                Join
+              </button>
+            </div>
+          </div>
+        );
+
+      case "profile":
+        return (
+          <div>
+            <h2 className="text-2xl font-semibold mb-4 text-blue-700 flex items-center">
+              <User className="mr-2" /> Profile
+            </h2>
+
+            <div className="bg-white rounded-lg shadow p-6 w-2/3">
+              <p><strong>Name:</strong> John Doe</p>
+              <p><strong>Email:</strong> johndoe@gmail.com</p>
+              <p><strong>Role:</strong> Student</p>
+              <p><strong>Group:</strong> {groupCreatedCode || "Not in any group yet"}</p>
+            </div>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="flex bg-gray-100 min-h-screen">
-      <Sidebar role="student" />
-    
+      <Sidebar
+       role="student"
+       activeTab={activeTab}
+       setActiveTab={setActiveTab}
+       onLogout={() => {
+        localStorage.clear();
+        window.location.reload();
+    }}
+/>
 
-      <div className="flex-1 p-6">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-10">
-          <h1 className="text-3xl font-bold text-blue-600">
-            Student Dashboard
-          </h1>
-          <button className="bg-blue-500 text-white px-4 py-2 rounded flex items-center hover:bg-blue-600">
-            <BookOpen size={18} />
-            <span className="ml-2">View Materials</span>
-          </button>
-        </div>
 
-        {/* Overview Stats */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
-          <div className="bg-white p-5 rounded-lg shadow-md">
-            <div className="flex items-center mb-2">
-              <CalendarDays size={18} className="text-gray-600 mr-2" />
-              <p className="text-gray-700 font-semibold">Total Assignments</p>
-            </div>
-            <p className="text-2xl font-bold text-blue-600">
-              {assignments.length}
-            </p>
-          </div>
-
-          <div className="bg-white p-5 rounded-lg shadow-md">
-            <div className="flex items-center mb-2">
-              <CheckCircle2 size={18} className="text-gray-600 mr-2" />
-              <p className="text-gray-700 font-semibold">Completed</p>
-            </div>
-            <p className="text-2xl font-bold text-green-600">
-              {
-                assignments.filter((a) => a.status === "Submitted").length
-              }
-            </p>
-          </div>
-
-          <div className="bg-white p-5 rounded-lg shadow-md">
-            <div className="flex items-center mb-2">
-              <BookOpen size={18} className="text-gray-600 mr-2" />
-              <p className="text-gray-700 font-semibold">Pending</p>
-            </div>
-            <p className="text-2xl font-bold text-red-600">
-              {
-                assignments.filter((a) => a.status === "Pending").length
-              }
-            </p>
-          </div>
-        </div>
-
-        {/* Assignment Table */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-xl font-semibold mb-4 text-blue-700">
-            My Assignments
-          </h2>
-
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-blue-50 text-left text-gray-700 font-semibold">
-                <th className="p-3">Title</th>
-                <th className="p-3">Due Date</th>
-                <th className="p-3">Status</th>
-                <th className="p-3">Grade</th>
-              </tr>
-            </thead>
-            <tbody>
-              {assignments.map((a) => (
-                <tr key={a.id} className="border-b hover:bg-gray-50">
-                  <td className="p-3">{a.title}</td>
-                  <td className="p-3">{a.dueDate}</td>
-                  <td
-                    className={`p-3 font-medium ${
-                      a.status === "Submitted"
-                        ? "text-green-600"
-                        : "text-red-600"
-                    }`}
-                  >
-                    {a.status}
-                  </td>
-                  <td className="p-3">{a.grade}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <div className="flex-1 p-8">{renderContent()}</div>
     </div>
   );
 }
