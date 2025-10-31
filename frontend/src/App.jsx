@@ -1,17 +1,27 @@
-import React from 'react'
-import Auth from './pages/Auth'
-import Sidebar from './components/Sidebar.jsx'
-import TeacherDashboard from './pages/TeacherDashboard.jsx'
+import React, { useState } from "react";
+import Auth from "./pages/Auth";
+import StudentDashboard from "./pages/StudentDashboard";
+import AdminDashboard from "./pages/TeacherDashboard";
 
-const App = () => {
-  return (
-    <div>
-      <Auth />
-      <TeacherDashboard/>
+export default function App() {
+  const [role, setRole] = useState(localStorage.getItem("role") || null);
 
+  const handleLoginSuccess = (userRole) => {
+    setRole(userRole);
+  };
 
-    </div>
-  )
+  const handleLogout = () => {
+    localStorage.clear();
+    setRole(null);
+  };
+
+  if (!role) {
+    return <Auth onLoginSuccess={handleLoginSuccess} />;
+  }
+
+  return role === "student" ? (
+    <StudentDashboard onLogout={handleLogout} />
+  ) : (
+    <AdminDashboard onLogout={handleLogout} />
+  );
 }
-
-export default App

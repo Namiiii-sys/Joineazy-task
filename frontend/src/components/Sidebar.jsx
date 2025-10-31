@@ -18,6 +18,11 @@ export default function Sidebar({ role }) {
   ];
 
   const links = role === "admin" ? adminLinks : studentLinks;
+  const onLogout = () => {
+    // Optionally clear storage here if not already cleared by the button handler
+    // window.localStorage.clear();
+    window.location.href = "/login";
+  };
 
   return (
     <div className="h-screen w-60 bg-white shadow-lg flex flex-col justify-between">
@@ -35,12 +40,17 @@ export default function Sidebar({ role }) {
           ))}
         </nav>
       </div>
+        <button
+        onClick={() => {
+          localStorage.clear();
+          onLogout();
+        }}
+        className="bg-white text-blue-900 font-semibold px-4 py-2 rounded hover:bg-gray-200 transition mt-8"
+      >
+        Logout
+      </button>
 
-      <div className="px-6 py-4 border-t">
-        <button className="flex items-center gap-3 text-red-600 hover:text-red-700">
-          <LogOut size={18} /> Logout
-        </button>
-      </div>
+      
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 
-export default function Auth() {
+export default function Auth({ onLoginSuccess }) {
   const [isLogin, setIsLogin] = useState(true);
 
   const [formData, setFormData] = useState({
@@ -11,29 +11,31 @@ export default function Auth() {
     role: "student",
   });
 
-  // whenever someone types in input box
   const handleChange = (e) => {
     setFormData({
-      ...formData, // keep old data
-      [e.target.name]: e.target.value, // update new field
+      ...formData,
+      [e.target.name]: e.target.value,
     });
   };
 
-  // when user clicks Login or Signup
   const handleSubmit = async (e) => {
-    e.preventDefault(); // stop page refresh
+    e.preventDefault();
 
     try {
       if (isLogin) {
-
         const res = await axios.post("http://localhost:5000/api/login", {
           email: formData.email,
           password: formData.password,
         });
 
+        // save token + role
+        localStorage.setItem("token", res.data.token);
+        localStorage.setItem("role", res.data.role);
+
         alert(res.data.message + " ✅ (" + res.data.role + ")");
+
+        onLoginSuccess(res.data.role);
       } else {
-        // REGISTER REQUEST
         const res = await axios.post("http://localhost:5000/api/register", {
           name: formData.name,
           email: formData.email,
@@ -42,6 +44,7 @@ export default function Auth() {
         });
 
         alert(res.data.message + " 🎉");
+        setIsLogin(true); // switch back to login form
       }
     } catch (error) {
       console.log(error.response?.data);
@@ -61,7 +64,7 @@ export default function Auth() {
             <div className="mb-5">
               <label className="block text-gray-700 font-medium mb-1">
                 Name
-               </label>
+              </label>
               <input
                 type="text"
                 name="name"
@@ -73,6 +76,7 @@ export default function Auth() {
             </div>
           )}
 
+          {/* Email */}
           <div className="mb-5">
             <label className="block text-gray-700 font-medium mb-1">
               Email
@@ -87,7 +91,8 @@ export default function Auth() {
             />
           </div>
 
-        <div className="mb-5">
+          {/* Password */}
+          <div className="mb-5">
             <label className="block text-gray-700 font-medium mb-1">
               Password
             </label>
@@ -101,21 +106,25 @@ export default function Auth() {
             />
           </div>
 
+          {/* Role (only for signup) */}
+          {!isLogin && (
             <div className="mb-6">
-            <label className="block text-gray-700 font-medium mb-1">
-              Role
-            </label>
-            <select
-              name="role"
-              value={formData.role}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-md focus:outline-none focus:border-blue-400"
-            >
-              <option value="student">Student</option>
-              <option value="admin">Admin</option>
-            </select>
-          </div>
+              <label className="block text-gray-700 font-medium mb-1">
+                Role
+              </label>
+              <select
+                name="role"
+                value={formData.role}
+                onChange={handleChange}
+                className="w-full border border-gray-300 rounded-md focus:outline-none focus:border-blue-400"
+              >
+                <option value="student">Student</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+          )}
 
+          {/* Submit button */}
           <button
             type="submit"
             className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition"
@@ -124,6 +133,7 @@ export default function Auth() {
           </button>
         </form>
 
+        {/* Toggle between Login and SignUp */}
         <p className="text-center mt-4 text-sm text-gray-600">
           {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
           <span
