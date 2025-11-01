@@ -108,35 +108,7 @@ app.get("/", (req, res) => {
 })
 
 // creating assgn
-// app.post("/api/assignments", async (req, res) => {
-//   const { title, description, deadline, teacherId } = req.body;
 
-//   try {
-//     // check if teacher exists
-//     const teacher = await prisma.user.findUnique(
-//       { where: { id: parseInt(teacherId) } });
-//     if (!teacher || teacher.role !== "admin") {
-//       return res.status(400)
-//     }
-
-//     // create new assignment
-//     const newAssignment = await prisma.assignment.create({
-//       data: {
-//         title,
-//         description,
-//         deadline: new Date(deadline),
-//         createdBy: teacherId,
-//       },
-//     });
-
-//     res.json({ message: "Assignment created successfully!", assignment: newAssignment });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ message: "Error creating assignment" });
-//   }
-// });
-
-// CREATE ASSIGNMENT
 app.post("/api/assignments", async (req, res) => {
    console.log("Incoming data:", req.body);
   let { title, description, deadline, driveLink, teacherId } = req.body;
