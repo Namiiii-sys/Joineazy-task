@@ -63,14 +63,14 @@ Copy code
 ```
 npx prisma migrate dev --name init
 ```
-5. ** Start the Backend **
+5. **Start the Backend**
 
 bash
 Copy code
 ```
 npm start
 ```
-6. ** Start the Frontend **
+6. **Start the Frontend**
 
 bash
 Copy code
@@ -80,19 +80,140 @@ npm run dev
 ```
 
 
-**API Endpoint Details**
-Authentication
-Method	Endpoint	Description
-POST	/api/register	Register a new user
-POST	/api/login	Login user and return token
-Groups
-Method	Endpoint	Description
-POST	/api/groups	Create a new group
-POST	/api/groups/join	Join group via code
-GET	/api/groups/user/:userId	Get user’s group
-POST	/api/groups/add-member	Add member by email (creator only)
-GET	/api/admin/groups	Fetch all groups (admin only)
-Assignments
-Method	Endpoint	Description
-POST	/api/assignments	Create new assignment
-GET	/api/assignments	Fetch all assignments
+
+
+## 🚀 API Endpoints
+
+### 🔐 Authentication
+
+| Method | Endpoint | Description |
+|:------:|-----------|-------------|
+| **POST** | `/api/register` | Register a new user |
+| **POST** | `/api/login` | Login user and return token |
+
+---
+
+### 👥 Groups
+
+| Method | Endpoint | Description |
+|:------:|-----------|-------------|
+| **POST** | `/api/groups` | Create a new group |
+| **POST** | `/api/groups/join` | Join group via code |
+| **GET** | `/api/groups/user/:userId` | Get user’s group |
+| **POST** | `/api/groups/add-member` | Add member by email (creator only) |
+| **GET** | `/api/admin/groups` | Fetch all groups (admin only) |
+
+---
+
+### 📝 Assignments
+
+| Method | Endpoint | Description |
+|:------:|-----------|-------------|
+| **POST** | `/api/assignments` | Create new assignment |
+| **GET** | `/api/assignments` | Fetch all assignments |
+
+---
+
+## 🗄 Database Schema (Prisma)
+
+```prisma
+model User {
+  id             Int       @id @default(autoincrement())
+  name           String
+  email          String    @unique
+  password       String
+  role           String
+  groupId        Int?
+  group          Group?    @relation("UserGroup", fields: [groupId], references: [id])
+  createdGroups  Group[]   @relation("CreatedGroups") 
+  createdAt      DateTime  @default(now())
+  Assignment     Assignment[]
+}
+
+model Group {
+  id          Int       @id @default(autoincrement())
+  name        String
+  code        String    @unique
+  creatorId   Int
+  createdAt   DateTime  @default(now())
+  members     User[]    @relation("UserGroup")
+  creator     User      @relation("CreatedGroups", fields: [creatorId], references: [id])  
+}
+
+model Assignment {
+  id          Int       @id @default(autoincrement())
+  title       String
+  description String?
+  deadline    DateTime
+  driveLink   String?
+  createdBy   Int
+  createdAt   DateTime  @default(now())
+  teacher     User      @relation(fields: [createdBy], references: [id])
+  status      String    @default("Active")
+}
+```
+---
+**Relationships (ER Diagram)**
+```
+  User (Admin)                                         
+   ├── creates ──> Group ─── has ───> Users (Students)  
+   └── creates ──> Assignment                           
+```
+---
+
+## 🏗️ Architecture Overview
+
+### Frontend
+- Built using **React.js** + **Tailwind CSS**
+- **Axios** for API communication
+- **Role-based dashboards:** Student & Admin
+
+### Backend
+- **Express.js** + **Prisma ORM**
+- **RESTful APIs** under `/api/*`
+- **JWT authentication** for session management
+
+### Database
+- **PostgreSQL**
+- Connected via **Prisma ORM**
+
+---
+
+**Flow Diagram**
+```
+[React Frontend]
+       │
+       ▼
+[Express.js API Server]
+       │
+       ▼
+[PostgreSQL Database]
+
+```
+
+---
+
+## 💡 Key Design & Deployment Decisions
+- **Prisma ORM** – ensures data integrity and smooth migrations  
+- **JWT Auth** – secure token-based authentication  
+- **Tailwind CSS** – for consistent, responsive UI design  
+- **RESTful API Structure** – modular and scalable  
+- **PostgreSQL** – reliable relational database choice  
+
+---
+
+## 🚧 Limitations & Future Scope
+Due to time constraints, some planned features couldn’t be added but are intended for future implementation:
+- Persistent assignment submission tracking  
+- Email notifications for member additions  
+- Analytics dashboard for admins  
+- Multi-admin workflow  
+- Cloud deployment (**Vercel + Render** integration)  
+
+---
+
+## 👩‍💻 Author
+**Developed by:** Namita Mehra  
+**Role:** Full Stack Developer  
+**Institution:** Shaheed Sukhdev College of Business Studies  
+**License:** MIT
