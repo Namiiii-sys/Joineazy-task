@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Sidebar from "../components/Sidebar";
 import { PlusCircle, FileText, Users, User } from "lucide-react";
+import Profile from "../components/Profile";
 import axios from "axios";
 
 export default function TeacherDashboard() {
@@ -86,7 +87,7 @@ export default function TeacherDashboard() {
               <div
              key={a.id}
              className="bg-white p-5 rounded-lg shadow-md border-l-4 border-blue-500"
-      >
+        >
   <h3 className="text-lg font-semibold">{a.title}</h3>
   <p className="text-gray-600 text-sm mt-1">Deadline: {a.deadline}</p>
 
@@ -191,21 +192,10 @@ export default function TeacherDashboard() {
       );
     }
 
-    if (activeTab === "profile") {
-      return (
-        <div>
-          <h2 className="text-2xl font-semibold mb-4 text-blue-700 flex items-center">
-            <User className="mr-2" /> Profile
-          </h2>
-          <div className="bg-white rounded-lg shadow p-6 w-2/3">
-            <p><strong>Name:</strong> Prof. Ria Arora</p>
-            <p><strong>Email:</strong> riaarora@college.edu</p>
-            <p><strong>Role:</strong> Teacher</p>
-            <p><strong>Joined:</strong> October 2024</p>
-          </div>
-        </div>
-      );
-    }
+  if (activeTab === "profile") {
+    return <Profile role="admin" />;
+  }
+
   };
 
   return (

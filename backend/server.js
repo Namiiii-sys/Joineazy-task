@@ -1,5 +1,3 @@
-// server.js
-
 const express = require("express")
 const cors = require("cors")
 const jwt = require("jsonwebtoken")
@@ -59,7 +57,8 @@ app.post("/api/login", async (req, res) => {
         { expiresIn: "1d" }
       )
       console.log("User logged in:", email)
-      res.json({ message: "Login successful!", role: user.role, userId: user.id });
+      res.json({ message: "Login successful!", 
+        role: user.role, userId: user.id, name: user.name, email: user.email } );
 
     }
   } catch (err) {
@@ -98,7 +97,7 @@ app.get("/api/student", verifyToken, (req, res) => {
 // admin route
 app.get("/api/admin", verifyToken, (req, res) => {
   if (req.user.role === "admin") {
-    res.json({ message: "Welcome Professor Dashboard 🧑‍🏫" })
+    res.json({ message: "Welcome Professor Dashboard" })
   } else {
     res.json({ message: "Not allowed" })
   }
@@ -139,7 +138,7 @@ app.get("/", (req, res) => {
 
 // CREATE ASSIGNMENT
 app.post("/api/assignments", async (req, res) => {
-   console.log("📩 Incoming data:", req.body);
+   console.log("Incoming data:", req.body);
   let { title, description, deadline, driveLink, teacherId } = req.body;
 
   try {
@@ -224,9 +223,7 @@ app.post("/api/groups/join", async (req, res) => {
 });
 
 
-
-// start server
-const PORT = process.env.PORT || 5000
+const PORT = 5000
 app.listen(PORT, () => {
   console.log("Server started on port", PORT)
 })

@@ -26,15 +26,16 @@ export default function Auth({ onLoginSuccess }) {
         const res = await axios.post("http://localhost:5000/api/login", {
           email: formData.email,
           password: formData.password,
+          name: formData.name,
         });
 
-        // save token + role
         localStorage.setItem("token", res.data.token);
         localStorage.setItem("role", res.data.role);
         localStorage.setItem("userId", res.data.userId);
+        localStorage.setItem("email", res.data.email);
+        localStorage.setItem("name", res.data.name);
 
         alert(res.data.message + " (" + res.data.role + ")");
-
         onLoginSuccess(res.data.role);
       } else {
         const res = await axios.post("http://localhost:5000/api/register", {
@@ -44,7 +45,7 @@ export default function Auth({ onLoginSuccess }) {
           role: formData.role,
         });
 
-        alert(res.data.message + " 🎉");
+        alert(res.data.message);
         setIsLogin(true); 
       }
     } catch (error) {
@@ -77,7 +78,6 @@ export default function Auth({ onLoginSuccess }) {
             </div>
           )}
 
-          {/* Email */}
           <div className="mb-5">
             <label className="block text-gray-700 font-medium mb-1">
               Email
@@ -92,7 +92,6 @@ export default function Auth({ onLoginSuccess }) {
             />
           </div>
 
-          {/* Password */}
           <div className="mb-5">
             <label className="block text-gray-700 font-medium mb-1">
               Password
@@ -107,7 +106,6 @@ export default function Auth({ onLoginSuccess }) {
             />
           </div>
 
-          {/* Role (only for signup) */}
           {!isLogin && (
             <div className="mb-6">
               <label className="block text-gray-700 font-medium mb-1">
@@ -125,7 +123,6 @@ export default function Auth({ onLoginSuccess }) {
             </div>
           )}
 
-          {/* Submit button */}
           <button
             type="submit"
             className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition"
@@ -134,7 +131,6 @@ export default function Auth({ onLoginSuccess }) {
           </button>
         </form>
 
-        {/* Toggle between Login and SignUp */}
         <p className="text-center mt-4 text-sm text-gray-600">
           {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
           <span

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import Sidebar from "../components/Sidebar";
+import Profile from "../components/Profile";
 import { BookOpen, Users, User } from "lucide-react";
 import axios from "axios";
 
@@ -141,16 +142,7 @@ export default function StudentDashboard() {
       case "profile":
         return (
           <div>
-            <h2 className="text-2xl font-semibold mb-4 text-blue-700 flex items-center">
-              <User className="mr-2" /> Profile
-            </h2>
-
-            <div className="bg-white rounded-lg shadow p-6 w-2/3">
-              <p><strong>Name:</strong> John Doe</p>
-              <p><strong>Email:</strong> johndoe@gmail.com</p>
-              <p><strong>Role:</strong> Student</p>
-              <p><strong>Group:</strong> {groupCreatedCode || "Not in any group yet"}</p>
-            </div>
+            <Profile role="student" />
           </div>
         );
 
