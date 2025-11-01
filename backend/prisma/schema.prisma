@@ -16,6 +16,7 @@ model User {
   groupId   Int?     
   group     Group?   @relation(fields: [groupId], references: [id])
   createdAt DateTime @default(now())
+  assignments Assignment[]
 }
 
 model Group {
@@ -23,4 +24,16 @@ model Group {
   code      String   @unique  
   members   User[]   
   createdAt DateTime @default(now())
+}
+
+model Assignment {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  deadline    DateTime
+  createdBy   Int
+  createdAt   DateTime @default(now())
+  teacher     User     @relation(fields: [createdBy], references: [id])
+  status   String   @default("Active")
+
 }

@@ -1,16 +1,27 @@
 import React, { useState } from "react";
 import Sidebar from "../components/Sidebar";
 import { BookOpen, Users, User } from "lucide-react";
+import axios from "axios";
 
 export default function StudentDashboard() {
   const [activeTab, setActiveTab] = useState("assignments");
   const [groupCode, setGroupCode] = useState("");
   const [groupCreatedCode, setGroupCreatedCode] = useState("");
+  const [assignments, setAssignments] = useState([]);
 
-  const assignments = [
-    { id: 1, title: "Database Design", dueDate: "2025-11-03", status: "Pending" },
-    { id: 2, title: "Frontend Module", dueDate: "2025-11-10", status: "Locked (Group not ready)" },
-  ];
+  React.useEffect(() => {
+  fetchAssignments();
+} , []);
+
+ const fetchAssignments = async () => {
+  try {
+    const res = await axios.get("http://localhost:5000/api/assignments");
+    setAssignments(res.data);
+  } catch (err) {
+    console.error("Error fetching assignments:", err);
+  }
+};
+
 
   // handle create group (mock for now)
   const handleCreateGroup = () => {
@@ -37,25 +48,34 @@ export default function StudentDashboard() {
             <h2 className="text-2xl font-semibold mb-4 text-blue-700 flex items-center">
               <BookOpen className="mr-2" /> My Assignments
             </h2>
+                {assignments.length === 0 ? (
+              <p className="text-gray-600">No assignments yet.</p>
+                ) : (
+                assignments.map((a) => (
+                <div
+                 key={a.id}
+                 className="bg-white p-5 mb-3 rounded-lg shadow-md border-l-4 border-blue-500"
+                  >
+                   <h3 className="text-lg font-semibold">{a.title}</h3>
+                    <p className="text-gray-600 text-sm mt-1">
+                    Deadline: {new Date(a.deadline).toLocaleDateString()}
+                    <p
+                    className={`mt-2 text-sm font-medium ${
+                    a.status === "Active"
+                    ? "text-green-600"
+                   : a.status === "Pending"
+                    ? "text-orange-500"
+                    : "text-gray-500"
+                  }`}
+                >
+                 Status: {a.status}
+               </p>
 
-            <table className="w-full bg-white rounded-lg shadow">
-              <thead className="bg-blue-50 text-gray-700 font-semibold">
-                <tr>
-                  <th className="p-3 text-left">Title</th>
-                  <th className="p-3 text-left">Due Date</th>
-                  <th className="p-3 text-left">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {assignments.map((a) => (
-                  <tr key={a.id} className="border-b hover:bg-gray-50">
-                    <td className="p-3">{a.title}</td>
-                    <td className="p-3">{a.dueDate}</td>
-                    <td className="p-3 text-blue-600">{a.status}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                </p>
+             </div>
+            ))
+          )}
+
           </div>
         );
 

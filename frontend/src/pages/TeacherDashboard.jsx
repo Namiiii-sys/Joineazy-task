@@ -1,15 +1,27 @@
 import React, { useState } from "react";
 import Sidebar from "../components/Sidebar";
 import { PlusCircle, FileText, Users, User } from "lucide-react";
+import axios from "axios";
 
 export default function TeacherDashboard() {
   const [activeTab, setActiveTab] = useState("assignments");
   const [showModal, setShowModal] = useState(false);
 
-  const [assignments, setAssignments] = useState([
-    { id: 1, title: "Database Design", deadline: "2025-11-10", status: "Active" },
-    { id: 2, title: "Frontend Module", deadline: "2025-11-20", status: "Pending Review" },
-  ]);
+  const [assignments, setAssignments] = useState([]);
+
+  React.useEffect(() => {
+  fetchAssignments();
+  }, []);
+
+   const fetchAssignments = async () => {
+    try {
+    const res = await axios.get("http://localhost:5000/api/assignments");
+    setAssignments(res.data);
+  } catch (err) {
+    console.error("Error fetching assignments:", err);
+  }
+};
+
 
   const [newAssignment, setNewAssignment] = useState({
     title: "",
@@ -26,27 +38,34 @@ export default function TeacherDashboard() {
     setNewAssignment({ ...newAssignment, file: e.target.files[0] });
   };
 
-  const handleAddAssignment = (e) => {
-    e.preventDefault();
-    if (!newAssignment.title || !newAssignment.deadline) {
-      alert("Please fill all fields!");
-      return;
-    }
+  const handleAddAssignment = async (e) => {
+  e.preventDefault();
+  if (!newAssignment.title || !newAssignment.deadline) {
+    alert("Please fill all fields!");
+    return;
+  }
 
-    const newItem = {
-      id: assignments.length + 1,
+  try {
+    await axios.post("http://localhost:5000/api/assignments", {
       title: newAssignment.title,
+      description: "Uploaded through dashboard",
       deadline: newAssignment.deadline,
-      status: "Active",
-    };
+      teacherId: localStorage.getItem("userId"),
+      Status: "Active",
+    });
 
-    setAssignments([...assignments, newItem]);
-    setNewAssignment({ title: "", deadline: "", file: null });
-    setShowModal(false);
     alert("Assignment created successfully!");
-  };
+    setShowModal(false);
+    setNewAssignment({ title: "", deadline: "", file: null });
+    fetchAssignments(); 
+  } catch (err) {
+    console.error("Error creating assignment:", err);
+    alert("Something went wrong while saving assignment!");
+  }
+};
 
-  const renderContent = () => {
+
+  const showContent = () => {
     if (activeTab === "assignments") {
       return (
         <div>
@@ -78,7 +97,18 @@ export default function TeacherDashboard() {
                     a.status === "Active" ? "text-green-600" : "text-orange-500"
                   }`}
                 >
-                  Status: {a.status}
+                 <p
+           className={`mt-2 text-sm font-medium ${
+    a.status === "Active"
+      ? "text-green-600"
+      : a.status === "Pending"
+      ? "text-orange-500"
+      : "text-gray-500"
+           }`}
+          >
+        Status: {a.status}
+</p>
+
                 </p>
               </div>
             ))}
@@ -183,7 +213,7 @@ export default function TeacherDashboard() {
           window.location.reload();
         }}
       />
-      <div className="flex-1 p-8">{renderContent()}</div>
+      <div className="flex-1 p-8">{showContent()}</div>
     </div>
   );
 }

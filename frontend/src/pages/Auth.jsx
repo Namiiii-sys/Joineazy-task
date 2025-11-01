@@ -31,8 +31,9 @@ export default function Auth({ onLoginSuccess }) {
         // save token + role
         localStorage.setItem("token", res.data.token);
         localStorage.setItem("role", res.data.role);
+        localStorage.setItem("userId", res.data.userId);
 
-        alert(res.data.message + " ✅ (" + res.data.role + ")");
+        alert(res.data.message + " (" + res.data.role + ")");
 
         onLoginSuccess(res.data.role);
       } else {
@@ -44,7 +45,7 @@ export default function Auth({ onLoginSuccess }) {
         });
 
         alert(res.data.message + " 🎉");
-        setIsLogin(true); // switch back to login form
+        setIsLogin(true); 
       }
     } catch (error) {
       console.log(error.response?.data);
