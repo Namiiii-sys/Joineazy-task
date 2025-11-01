@@ -23,7 +23,6 @@ export default function Sidebar({ role, activeTab, setActiveTab, onLogout }) {
       <div>
         <div className="p-6 text-3xl font-bold text-blue-600">Joineazy</div>
 
-        {/* Navigation Links */}
         <nav className="mt-6">
           {links.map((link) => (
             <div

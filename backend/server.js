@@ -139,7 +139,8 @@ app.get("/", (req, res) => {
 
 // CREATE ASSIGNMENT
 app.post("/api/assignments", async (req, res) => {
-  let { title, description, deadline, teacherId } = req.body;
+   console.log("📩 Incoming data:", req.body);
+  let { title, description, deadline, driveLink, teacherId } = req.body;
 
   try {
     console.log(" Incoming data:", req.body);
@@ -162,6 +163,7 @@ app.post("/api/assignments", async (req, res) => {
         description,
          deadline: new Date(deadline),
         createdBy: parsedTeacherId,
+        driveLink,
         status: "Active",
       },
     });
@@ -188,6 +190,39 @@ app.post("/api/assignments", async (req, res) => {
     res.status(500).json({ message: "Error fetching assignments" });
   }
  });
+
+ // create group
+  app.post("/api/groups", async (req, res) => {
+   const { name, creatorId } = req.body;
+   try {
+    const newGroup = await prisma.group.create({
+      data: { name, creatorId },
+    });
+    res.json({ message: "Group created successfully!", group: newGroup });
+   } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error creating group" });
+   }
+} );
+
+// join group
+app.post("/api/groups/join", async (req, res) => {
+  const { groupCode, studentId } = req.body;
+  try {
+    const group = await prisma.group.findUnique({ where: { code: groupCode } });
+    if (!group) return res.status(404).json({ message: "Invalid group code" });
+
+    await prisma.groupMember.create({
+      data: { groupId: group.id, studentId },
+    });
+
+    res.json({ message: "Joined group successfully!" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error joining group" });
+  }
+});
+
 
 
 // start server

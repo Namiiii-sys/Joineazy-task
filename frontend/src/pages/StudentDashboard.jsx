@@ -48,35 +48,45 @@ export default function StudentDashboard() {
             <h2 className="text-2xl font-semibold mb-4 text-blue-700 flex items-center">
               <BookOpen className="mr-2" /> My Assignments
             </h2>
-                {assignments.length === 0 ? (
+            {assignments.length === 0 ? (
               <p className="text-gray-600">No assignments yet.</p>
                 ) : (
-                assignments.map((a) => (
-                <div
-                 key={a.id}
-                 className="bg-white p-5 mb-3 rounded-lg shadow-md border-l-4 border-blue-500"
-                  >
-                   <h3 className="text-lg font-semibold">{a.title}</h3>
-                    <p className="text-gray-600 text-sm mt-1">
-                    Deadline: {new Date(a.deadline).toLocaleDateString()}
-                    <p
-                    className={`mt-2 text-sm font-medium ${
-                    a.status === "Active"
-                    ? "text-green-600"
-                   : a.status === "Pending"
-                    ? "text-orange-500"
-                    : "text-gray-500"
-                  }`}
-                >
-                 Status: {a.status}
-               </p>
+            assignments.map((a) => (
+                            <div
+                             key={a.id}
+                             className="bg-white p-5 mb-3 rounded-lg shadow-md border-l-4 border-blue-500"
+                              >
+                               <h3 className="text-lg font-semibold">{a.title}</h3>
+                                <div className="text-gray-600 text-sm mt-1">
+                                  <div>Deadline: {new Date(a.deadline).toLocaleDateString()}</div>
+                                <p
+                                className={`mt-2 text-sm font-medium ${
+                                a.status === "Active"
+                                ? "text-green-600"
+                               : a.status === "Pending"
+                                ? "text-orange-500"
+                                : "text-gray-500"
+                              }`}
+                            >
+                             Status: {a.status}
+                               </p>
+                               
+                               {a.driveLink && (
+                               <a
+                               href={a.driveLink}
+                               target="_blank"
+                               rel="noopener noreferrer"
+                               className="text-blue-500 text-sm underline mt-2 inline-block"
+                              >
+                               Submit on Drive
+                              </a>
+                               )}
+                              </div>
+                         </div>
+                        ))
+                      )}
 
-                </p>
-             </div>
-            ))
-          )}
-
-          </div>
+                   </div>
         );
 
       case "team":

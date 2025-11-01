@@ -31,6 +31,7 @@ model Assignment {
   title       String
   description String?
   deadline    DateTime
+  driveLink   String? 
   createdBy   Int
   createdAt   DateTime @default(now())
   teacher     User     @relation(fields: [createdBy], references: [id])

@@ -26,6 +26,7 @@ export default function TeacherDashboard() {
   const [newAssignment, setNewAssignment] = useState({
     title: "",
     deadline: "",
+    driveLink: "",
     file: null,
   });
 
@@ -34,9 +35,6 @@ export default function TeacherDashboard() {
     setNewAssignment({ ...newAssignment, [name]: value });
   };
 
-  const handleFileUpload = (e) => {
-    setNewAssignment({ ...newAssignment, file: e.target.files[0] });
-  };
 
   const handleAddAssignment = async (e) => {
   e.preventDefault();
@@ -50,6 +48,7 @@ export default function TeacherDashboard() {
       title: newAssignment.title,
       description: "Uploaded through dashboard",
       deadline: newAssignment.deadline,
+      driveLink: newAssignment.driveLink,
       teacherId: localStorage.getItem("userId"),
       Status: "Active",
     });
@@ -85,32 +84,36 @@ export default function TeacherDashboard() {
           <div className="grid grid-cols-2 gap-4">
             {assignments.map((a) => (
               <div
-                key={a.id}
-                className="bg-white p-5 rounded-lg shadow-md border-l-4 border-blue-500"
-              >
-                <h3 className="text-lg font-semibold">{a.title}</h3>
-                <p className="text-gray-600 text-sm mt-1">
-                  Deadline: {a.deadline}
-                </p>
-                <p
-                  className={`mt-2 text-sm font-medium ${
-                    a.status === "Active" ? "text-green-600" : "text-orange-500"
-                  }`}
-                >
-                 <p
-           className={`mt-2 text-sm font-medium ${
-    a.status === "Active"
-      ? "text-green-600"
-      : a.status === "Pending"
-      ? "text-orange-500"
-      : "text-gray-500"
-           }`}
-          >
-        Status: {a.status}
-</p>
+             key={a.id}
+             className="bg-white p-5 rounded-lg shadow-md border-l-4 border-blue-500"
+      >
+  <h3 className="text-lg font-semibold">{a.title}</h3>
+  <p className="text-gray-600 text-sm mt-1">Deadline: {a.deadline}</p>
 
-                </p>
-              </div>
+  <p
+    className={`mt-2 text-sm font-medium ${
+      a.status === "Active"
+        ? "text-green-600"
+        : a.status === "Pending"
+        ? "text-orange-500"
+        : "text-gray-500"
+    }`}
+  >
+    Status: {a.status}
+  </p>
+
+  {a.driveLink && (
+    <a
+      href={a.driveLink}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-blue-600 hover:text-blue-800 text-sm font-medium underline mt-2 inline-block transition"
+    >
+      Open Drive Folder
+    </a>
+  )}
+</div>
+
             ))}
           </div>
 
@@ -141,11 +144,14 @@ export default function TeacherDashboard() {
                     className="border border-gray-300 p-2 w-full rounded mb-4"
                   />
 
-                  <label className="block mb-2 font-medium">Upload File</label>
+                  <label className="block mb-2 font-medium">Drive/OneDrive Link</label>
                   <input
-                    type="file"
-                    onChange={handleFileUpload}
-                    className="border border-gray-300 p-2 w-full rounded mb-4"
+                     type="url"
+                     name="driveLink"
+                     value={newAssignment.driveLink}
+                     onChange={handleChange}
+                     placeholder="Paste your OneDrive/Google Drive link"
+                     className="border border-gray-300 p-2 w-full rounded mb-4"
                   />
 
                   <div className="flex justify-end gap-3">
