@@ -170,7 +170,7 @@ app.post("/api/assignments", async (req, res) => {
     console.log("Assignment created:", newAssignment);
     res.json({ message: "Assignment created successfully!", assignment: newAssignment });
   } catch (error) {
-    console.error("🔥 Error creating assignment:", error);
+    console.error("Error creating assignment:", error);
     res.status(500).json({ message: "Internal server error", error: error.message });
   }
 });
@@ -190,38 +190,217 @@ app.post("/api/assignments", async (req, res) => {
   }
  });
 
- // create group
-  app.post("/api/groups", async (req, res) => {
-   const { name, creatorId } = req.body;
-   try {
-    const newGroup = await prisma.group.create({
-      data: { name, creatorId },
-    });
-    res.json({ message: "Group created successfully!", group: newGroup });
-   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Error creating group" });
-   }
-} );
 
-// join group
+// ~ GROUP ROUTES ~
+
+// Create a new group
+app.post("/api/groups", async (req, res) => {
+  const { name, creatorId } = req.body;
+
+  try {
+    if (!name || !creatorId)
+      return res.status(400).json({ message: "Name and creatorId required" });
+
+    const groupCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+
+    const newGroup = await prisma.group.create({
+      data: {
+        name,
+        creatorId: parseInt(creatorId),
+        code: groupCode,
+      },
+      include: {
+        members: true,
+      },
+    });
+
+    await prisma.user.update({
+      where: { id: parseInt(creatorId) },
+      data: { groupId: newGroup.id },
+    });
+
+    const creator = await prisma.user.findUnique({
+      where: { id: parseInt(creatorId) },
+    });
+
+    const groupData = {
+      ...newGroup,
+      creatorName: creator.name,
+      creatorEmail: creator.email,
+    };
+
+    console.log("Group created:", groupData);
+    res.json({ message: "Group created successfully.", group: groupData });
+  } catch (error) {
+    console.error("Error creating group:", error);
+    res.status(500).json({ message: "Error creating group" });
+  }
+});
+
+// Join 
 app.post("/api/groups/join", async (req, res) => {
   const { groupCode, studentId } = req.body;
-  try {
-    const group = await prisma.group.findUnique({ where: { code: groupCode } });
-    if (!group) return res.status(404).json({ message: "Invalid group code" });
 
-    await prisma.groupMember.create({
-      data: { groupId: group.id, studentId },
+  try {
+    const group = await prisma.group.findUnique({
+      where: { code: groupCode },
     });
 
-    res.json({ message: "Joined group successfully!" });
+    if (!group)
+      return res.status(404).json({ message: "Invalid group code" });
+
+    await prisma.user.update({
+      where: { id: parseInt(studentId) },
+      data: { groupId: group.id },
+    });
+
+    const updatedGroup = await prisma.group.findUnique({
+      where: { id: group.id },
+      include: { members: true },
+    });
+
+    const creator = await prisma.user.findUnique({
+      where: { id: group.creatorId },
+    });
+
+    const groupData = {
+      ...updatedGroup,
+      creatorName: creator.name,
+      creatorEmail: creator.email,
+    };
+
+    res.json({ message: "Joined group successfully.", group: groupData });
   } catch (error) {
-    console.error(error);
+    console.error("Error joining group:", error);
     res.status(500).json({ message: "Error joining group" });
   }
 });
 
+// Fetch 
+app.get("/api/groups/user/:userId", async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: parseInt(userId) },
+      include: {
+        group: {
+          include: { members: true },
+        },
+      },
+    });
+
+    if (!user || !user.group) {
+      return res.json({ group: null });
+    }
+
+    const creator = await prisma.user.findUnique({
+      where: { id: user.group.creatorId },
+    });
+
+    const groupData = {
+      ...user.group,
+      creatorName: creator.name,
+      creatorEmail: creator.email,
+    };
+
+    res.json({ group: groupData });
+  } catch (error) {
+    console.error("Error fetching group:", error);
+    res.status(500).json({ message: "Error fetching group" });
+  }
+});
+
+// add member (by only creator)
+app.post("/api/groups/add-member", async (req, res) => {
+  const { creatorId, groupId, memberEmail } = req.body;
+
+  try {
+    const group = await prisma.group.findUnique({
+      where: { id: parseInt(groupId) },
+      include: { members: true },
+    });
+
+    if (!group)
+      return res.status(404).json({ success: false, message: "Group not found" });
+
+    if (group.creatorId !== parseInt(creatorId))
+      return res.status(403).json({ success: false, message: "Only the creator can add members" });
+
+    const member = await prisma.user.findUnique({
+      where: { email: memberEmail },
+    });
+
+    if (!member)
+      return res.status(404).json({ success: false, message: "No user found with that email" });
+
+    if (member.role === "admin")
+      return res.status(400).json({ success: false, message: "Admin users cannot be added to groups" });
+
+    await prisma.user.update({
+      where: { id: member.id },
+      data: { groupId: group.id },
+    });
+
+    const updatedGroup = await prisma.group.findUnique({
+      where: { id: group.id },
+      include: { members: true },
+    });
+
+    const creator = await prisma.user.findUnique({
+      where: { id: group.creatorId },
+    });
+
+    const groupData = {
+      ...updatedGroup,
+      creatorName: creator.name,
+      creatorEmail: creator.email,
+    };
+
+    res.status(200).json({
+      success: true,
+      message: `${member.name} added successfully.`,
+      group: groupData,
+    });
+  } catch (error) {
+    console.error("Error adding member:", error);
+    res.status(500).json({ success: false, message: "User not Found or already Registered!" });
+  }
+});
+
+// fetch (for admin)
+app.get("/api/admin/groups", async (req, res) => {
+  try {
+    const groups = await prisma.group.findMany({
+      include: {
+        creator: {
+          select: { id: true, name: true, email: true }
+        },
+        members: {
+          select: { id: true, name: true, email: true, role: true }
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (!groups.length) {
+      return res.status(404).json({ message: "No groups found" });
+    }
+
+    const formattedGroups = groups.map(group => ({
+      id: group.id,
+      name: group.name,
+      code: group.code,
+      createdAt: group.createdAt,
+      creator: group.creator,
+      members: group.members.filter(m => m.role !== "admin"),
+    }));
+
+    res.json({ groups: formattedGroups });
+  } catch (error) {
+    console.error("Error fetching groups:", error);
+    res.status(500).json({ message: "Error fetching groups" });
+  }
+});
 
 const PORT = 5000
 app.listen(PORT, () => {

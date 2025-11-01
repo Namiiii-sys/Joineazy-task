@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Sidebar from "../components/Sidebar";
 import { PlusCircle, FileText, Users, User } from "lucide-react";
 import Profile from "../components/Profile";
+import AdminGroups from "../components/AdminGroups";
 import axios from "axios";
 
 export default function TeacherDashboard() {
@@ -178,18 +179,8 @@ export default function TeacherDashboard() {
       );
     }
 
-    if (activeTab === "groups") {
-      return (
-        <div>
-          <h2 className="text-2xl font-semibold mb-4 text-blue-700 flex items-center">
-            <Users className="mr-2" /> Group Info
-          </h2>
-          <p className="text-gray-600">
-            You can view all created student groups and their members here
-            (feature to be added later).
-          </p>
-        </div>
-      );
+   if (activeTab === "groups") {
+      return <AdminGroups/>;
     }
 
   if (activeTab === "profile") {

@@ -8,22 +8,26 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  password  String
-  role      String
-  groupId   Int?     
-  group     Group?   @relation(fields: [groupId], references: [id])
-  createdAt DateTime @default(now())
-  assignments Assignment[]
+  id            Int          @id @default(autoincrement())
+  name          String
+  email         String       @unique
+  password      String
+  role          String
+  groupId       Int?
+  group         Group?       @relation("UserGroup", fields: [groupId], references: [id])
+  createdGroups Group[]      @relation("CreatorRelation")
+  createdAt     DateTime     @default(now())
+  Assignment    Assignment[]
 }
 
 model Group {
   id        Int      @id @default(autoincrement())
-  code      String   @unique  
-  members   User[]   
+  name      String
+  code      String   @unique
+  creatorId Int
   createdAt DateTime @default(now())
+  members   User[]   @relation("UserGroup")
+  creator   User     @relation("CreatorRelation", fields: [creatorId], references: [id])
 }
 
 model Assignment {
@@ -31,10 +35,9 @@ model Assignment {
   title       String
   description String?
   deadline    DateTime
-  driveLink   String? 
+  driveLink   String?
   createdBy   Int
   createdAt   DateTime @default(now())
   teacher     User     @relation(fields: [createdBy], references: [id])
-  status   String   @default("Active")
-
+  status      String   @default("Active")
 }
