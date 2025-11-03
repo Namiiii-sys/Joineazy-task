@@ -16,7 +16,7 @@ export default function StudentDashboard() {
 
  const fetchAssignments = async () => {
   try {
-    const res = await axios.get("http://localhost:5000/api/assignments");
+    const res = await axios.get("https://joineazy-backend.vercel.app/api/assignments");
     setAssignments(res.data);
   } catch (err) {
     console.error("Error fetching assignments:", err);

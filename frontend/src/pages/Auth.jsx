@@ -23,7 +23,7 @@ export default function Auth({ onLoginSuccess }) {
 
     try {
       if (isLogin) {
-        const res = await axios.post("http://localhost:5000/api/login", {
+        const res = await axios.post("https://joineazy-backend.vercel.app/api/login", {
           email: formData.email,
           password: formData.password,
           name: formData.name,
@@ -38,7 +38,7 @@ export default function Auth({ onLoginSuccess }) {
         alert(res.data.message + " (" + res.data.role + ")");
         onLoginSuccess(res.data.role);
       } else {
-        const res = await axios.post("http://localhost:5000/api/register", {
+        const res = await axios.post("https://joineazy-backend.vercel.app/api/register", {
           name: formData.name,
           email: formData.email,
           password: formData.password,

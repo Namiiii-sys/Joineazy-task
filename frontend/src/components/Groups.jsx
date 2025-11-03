@@ -14,7 +14,7 @@ export default function Groups() {
   useEffect(() => {
     const fetchGroup = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/groups/user/${userId}`);
+        const res = await axios.get(`https://joineazy-backend.vercel.app/api/groups/user/${userId}`);
         if (res.data.group) setGroup(res.data.group);
       } catch (err) {
         console.error("Error fetching group:", err);
@@ -28,7 +28,7 @@ export default function Groups() {
     const code = generateGroupCode();
 
     try {
-      const res = await axios.post("http://localhost:5000/api/groups", {
+      const res = await axios.post("https://joineazy-backend.vercel.app/api/groups", {
         name: groupName,
         creatorId: userId,
         code,
@@ -44,7 +44,7 @@ export default function Groups() {
   const handleJoinGroup = async () => {
     if (!joinCode.trim()) return alert("Enter a valid group code.");
     try {
-      const res = await axios.post("http://localhost:5000/api/groups/join", {
+      const res = await axios.post("https://joineazy-backend.vercel.app/api/groups/join", {
         groupCode: joinCode,
         studentId: userId,
       });
@@ -59,7 +59,7 @@ export default function Groups() {
   const handleAddMember = async () => {
     if (!memberEmail.trim()) return alert("Enter member email.");
     try {
-      const res = await axios.post("http://localhost:5000/api/groups/add-member", {
+      const res = await axios.post("https://joineazy-backend.vercel.app/api/groups/add-member", {
         creatorId: userId,
         groupId: group?.id,
         memberEmail,

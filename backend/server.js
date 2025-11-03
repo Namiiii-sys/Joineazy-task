@@ -8,7 +8,9 @@ const app = express()
 const prisma = new PrismaClient()
 
 app.use(express.json())
-app.use(cors())
+app.use(cors({
+  origin: ["http://localhost:5173","https://joineazy-frontend.vercel.app/"]
+}))
 
 app.post("/api/register", async (req, res) => {
   const { name, email, password, role } = req.body

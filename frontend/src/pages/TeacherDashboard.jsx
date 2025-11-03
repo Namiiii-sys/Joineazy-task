@@ -17,7 +17,7 @@ export default function TeacherDashboard() {
 
    const fetchAssignments = async () => {
     try {
-    const res = await axios.get("http://localhost:5000/api/assignments");
+    const res = await axios.get("https://joineazy-backend.vercel.app/api/assignments");
     setAssignments(res.data);
   } catch (err) {
     console.error("Error fetching assignments:", err);
@@ -46,7 +46,7 @@ export default function TeacherDashboard() {
   }
 
   try {
-    await axios.post("http://localhost:5000/api/assignments", {
+    await axios.post("https://joineazy-backend.vercel.app/api/assignments", {
       title: newAssignment.title,
       description: "Uploaded through dashboard",
       deadline: newAssignment.deadline,

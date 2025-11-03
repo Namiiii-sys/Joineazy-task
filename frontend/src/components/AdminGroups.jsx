@@ -9,7 +9,7 @@ export default function AdminGroups() {
   useEffect(() => {
     const fetchGroups = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/admin/groups");
+        const res = await axios.get("https://joineazy-backend.vercel.app/api/admin/groups");
         setGroups(res.data.groups || []);
       } catch (err) {
         console.error("Error fetching groups:", err);
