@@ -165,6 +165,37 @@ app.post("/api/assignments", async (req, res) => {
   }
  });
 
+ // Submit assigns
+app.post("/api/submissions", async (req, res) => {
+  const { studentId, assignmentId, driveLink } = req.body;
+
+  if (!studentId || !assignmentId || !driveLink) {
+    return res.status(400).json({ message: "All fields are required" });
+  }
+
+  try {
+    const submission = await prisma.submission.create({
+      data: {
+        studentId: parseInt(studentId),
+        assignmentId: parseInt(assignmentId),
+        driveLink,
+      },
+      include: {
+        student: { select: { name: true, email: true } },
+        assignment: { select: { title: true } },
+      },
+    });
+
+    res.status(201).json({
+      message: "Assignment submitted successfully!",
+      submission,
+    });
+  } catch (error) {
+    console.error("Error submitting assignment:", error);
+    res.status(500).json({ message: "Error submitting assignment" });
+  }
+});
+
 
 // ~ GROUP ROUTES ~
 

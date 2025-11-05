@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import generateGroupCode from "../utils/groupcode.js";
+import { Users, Copy, Plus, LogIn, Mail } from "lucide-react";
+import { Toaster, toast } from "sonner";
 
 export default function Groups() {
   const [group, setGroup] = useState(null);
   const [groupName, setGroupName] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [memberEmail, setMemberEmail] = useState("");
-  const [message, setMessage] = useState("");
 
   const userId = localStorage.getItem("userId");
 
@@ -24,7 +25,7 @@ export default function Groups() {
   }, [userId]);
 
   const handleCreateGroup = async () => {
-    if (!groupName.trim()) return alert("Please enter a group name.");
+    if (!groupName.trim()) return toast.error("Please enter a group name.");
     const code = generateGroupCode();
 
     try {
@@ -34,30 +35,32 @@ export default function Groups() {
         code,
       });
       setGroup(res.data.group);
-      setMessage("Group created successfully.");
+      toast.success("Group created successfully!");
+      setGroupName("");
     } catch (err) {
       console.error(err);
-      setMessage("Error creating group.");
+      toast.error("Error creating group.");
     }
   };
 
   const handleJoinGroup = async () => {
-    if (!joinCode.trim()) return alert("Enter a valid group code.");
+    if (!joinCode.trim()) return toast.error("Enter a valid group code.");
     try {
       const res = await axios.post("https://joineazy-backend.vercel.app/api/groups/join", {
         groupCode: joinCode,
         studentId: userId,
       });
       setGroup(res.data.group);
-      setMessage(res.data.message);
+      toast.success(res.data.message);
+      setJoinCode("");
     } catch (err) {
       console.error(err);
-      setMessage("Error joining group.");
+      toast.error("Error joining group.");
     }
   };
 
   const handleAddMember = async () => {
-    if (!memberEmail.trim()) return alert("Enter member email.");
+    if (!memberEmail.trim()) return toast.error("Enter member email.");
     try {
       const res = await axios.post("https://joineazy-backend.vercel.app/api/groups/add-member", {
         creatorId: userId,
@@ -67,62 +70,100 @@ export default function Groups() {
 
       if (res.data.success) {
         setGroup(res.data.group);
-        setMessage(res.data.message);
+        toast.success(res.data.message);
+        setMemberEmail("");
       } else {
-        setMessage(res.data.message);
+        toast.error(res.data.message);
       }
     } catch (err) {
       console.error("Axios error:", err);
-      setMessage("Server error while adding member.");
+      toast.error("Server error while adding member.");
     }
   };
 
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(group.code);
+    toast.success("Code copied!");
+  };
+
   return (
-    <div className="p-6">
-      <h2 className="text-3xl font-bold text-blue-700 mb-6">My Group</h2>
+    <div className="max-w-5xl mx-auto p-4 sm:p-6">
+      <Toaster position="top-center" richColors />
+
+      <div className="mb-8">
+        <div className="flex">
+        <Users className="text-purple-800 gap-2 mt-2 mr-2" size={28} />
+        <h2 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-2">My Group</h2>
+        </div>
+        <p className="text-gray-500">Manage your team.</p>
+      </div>
 
       {group ? (
-        <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-500">
-          <h3 className="text-2xl font-semibold text-blue-600 mb-2">{group.name}</h3>
-          <p className="text-gray-700 mb-1">
-            Group Code: <strong>{group.code}</strong>
-          </p>
-          <p className="text-gray-600 mb-3">
-            Created by: {group.creatorName} ({group.creatorEmail})
-          </p>
-
-          {group.creatorId == userId && (
-            <div className="mt-4">
-              <h4 className="font-semibold text-blue-600 mb-2">Add Member by Email</h4>
-              <div className="flex gap-2">
-                <input
-                  type="email"
-                  value={memberEmail}
-                  onChange={(e) => setMemberEmail(e.target.value)}
-                  placeholder="Enter member's email"
-                  className="border border-gray-300 p-2 rounded w-full"
-                />
+        <div className="space-y-6">
+          <div className="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-sm">
+            <div className="flex items-start justify-between flex-wrap gap-4 mb-6">
+              <div>
+                <h3 className="text-2xl font-bold text-gray-800 mb-1">{group.name}</h3>
+                <p className="text-gray-500 text-sm">
+                  Created by {group.creatorName}
+                </p>
+              </div>
+              
+              <div className="bg-blue-50 px-4 py-3 rounded-xl flex items-center gap-3 border border-blue-100">
+                <div>
+                  <p className="text-xs text-gray-500 font-medium">Group Code</p>
+                  <p className="text-lg font-bold text-blue-600 tracking-wide">{group.code}</p>
+                </div>
                 <button
-                  onClick={handleAddMember}
-                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                  onClick={copyToClipboard}
+                  className="text-blue-600 hover:text-blue-700 transition-colors"
                 >
-                  Add
+                  <Copy size={18} />
                 </button>
               </div>
             </div>
-          )}
 
+            {group.creatorId == userId && (
+              <div className="border-t border-gray-100 pt-6">
+                <label className="block text-gray-700 font-medium mb-3 text-sm">
+                  Add Team Member
+                </label>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <input
+                    type="email"
+                    value={memberEmail}
+                    onChange={(e) => setMemberEmail(e.target.value)}
+                    placeholder="member@email.com"
+                    className="flex-1 border-2 border-gray-200 px-4 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all"
+                  />
+                  <button
+                    onClick={handleAddMember}
+                    className="bg-blue-600 text-white px-5 py-2.5 rounded-xl hover:bg-blue-700 transition-colors font-medium whitespace-nowrap"
+                  >
+                    Add Member
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
           {group.members && group.members.length > 0 && (
-            <div className="mt-6">
-              <h4 className="font-semibold text-blue-600 mb-3">Group Members</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+              <h4 className="font-bold text-gray-800 mb-4">
+                Members ({group.members.length})
+              </h4>
+              <div className="space-y-3">
                 {group.members.map((member) => (
                   <div
                     key={member.id}
-                    className="border border-gray-200 rounded-lg p-3 bg-gray-50 shadow-sm"
+                    className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors"
                   >
-                    <p className="text-gray-800 font-medium">{member.name}</p>
-                    <p className="text-gray-600 text-sm">{member.email}</p>
+                    <div className="bg-blue-100 text-blue-600 w-10 h-10 rounded-full flex items-center justify-center font-semibold">
+                      {member.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-gray-800 font-medium">{member.name}</p>
+                      <p className="text-gray-500 text-sm truncate">{member.email}</p>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -131,43 +172,59 @@ export default function Groups() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-500">
-            <h3 className="text-xl font-semibold text-blue-600 mb-4">Create a Group</h3>
+          <div className="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="bg-blue-100 p-2.5 rounded-lg">
+                <Plus size={20} className="text-blue-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-800">Create Group</h3>
+            </div>
+            <p className="text-gray-500 text-sm mb-6">
+              Start a new team and invite members
+            </p>
+            
             <input
               type="text"
               value={groupName}
               onChange={(e) => setGroupName(e.target.value)}
               placeholder="Enter group name"
-              className="border border-gray-300 p-2 rounded w-full mb-4"
+              className="w-full border-2 border-gray-200 px-4 py-3 rounded-xl mb-4 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all"
             />
             <button
               onClick={handleCreateGroup}
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 w-full"
+              className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors w-full font-semibold"
             >
               Create Group
             </button>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-500">
-            <h3 className="text-xl font-semibold text-blue-600 mb-4">Join a Group</h3>
+          <div className="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="bg-purple-100 p-2.5 rounded-lg">
+                <LogIn size={20} className="text-purple-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-800">Join Group</h3>
+            </div>
+            <p className="text-gray-500 text-sm mb-6">
+              Use a code to join an existing team
+            </p>
+            
             <input
               type="text"
               value={joinCode}
               onChange={(e) => setJoinCode(e.target.value)}
               placeholder="Enter group code"
-              className="border border-gray-300 p-2 rounded w-full mb-4"
+              className="w-full border-2 border-gray-200 px-4 py-3 rounded-xl mb-4 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition-all"
             />
             <button
               onClick={handleJoinGroup}
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 w-full"
+              className="bg-purple-600 text-white px-6 py-3 rounded-xl hover:bg-purple-700 transition-colors w-full font-semibold"
             >
               Join Group
             </button>
           </div>
         </div>
       )}
-
-      {message && <p className="mt-4 text-blue-600 font-medium">{message}</p>}
     </div>
   );
 }

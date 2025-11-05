@@ -18,6 +18,7 @@ model User {
   createdGroups Group[]      @relation("CreatorRelation")
   createdAt     DateTime     @default(now())
   Assignment    Assignment[]
+  submissions   Submission[]
 }
 
 model Group {
@@ -31,13 +32,26 @@ model Group {
 }
 
 model Assignment {
-  id          Int      @id @default(autoincrement())
+  id          Int          @id @default(autoincrement())
   title       String
   description String?
   deadline    DateTime
   driveLink   String?
   createdBy   Int
-  createdAt   DateTime @default(now())
-  teacher     User     @relation(fields: [createdBy], references: [id])
-  status      String   @default("Active")
+  createdAt   DateTime     @default(now())
+  teacher     User         @relation(fields: [createdBy], references: [id])
+  status      String       @default("Active")
+  submissions Submission[]
 }
+
+model Submission {
+  id           Int         @id @default(autoincrement())
+  studentId    Int
+  assignmentId Int
+  driveLink    String
+  submittedAt  DateTime    @default(now())
+
+  student      User        @relation(fields: [studentId], references: [id])
+  assignment   Assignment  @relation(fields: [assignmentId], references: [id])
+}
+

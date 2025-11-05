@@ -1,58 +1,93 @@
-import React from "react";
-import { Home, Users, FileText, BarChart2, LogOut, User } from "lucide-react";
+import React, { useState } from "react";
+import { Home, Users, FileText, BarChart2, LogOut, User, Menu, X } from "lucide-react";
 
 export default function Sidebar({ role, activeTab, setActiveTab, onLogout }) {
-  // student sidebar links
+  const [isOpen, setIsOpen] = useState(false);
+
   const studentLinks = [
-    { name: "Assignments", icon: <FileText size={18} />, key: "assignments" },
-    { name: "My Team", icon: <Users size={18} />, key: "team" },
-    { name: "Profile", icon: <User size={18} />, key: "profile" },
+    { name: "Assignments", icon: <FileText size={20} />, key: "assignments" },
+    { name: "My Team", icon: <Users size={20} />, key: "team" },
+    { name: "Profile", icon: <User size={20} />, key: "profile" },
   ];
 
-  // teacher sidebar links
   const adminLinks = [
-    { name: "Assignments", icon: <FileText size={18} />, key: "assignments" },
-    { name: "Group Info", icon: <Users size={18} />, key: "groups" },
-    { name: "Profile", icon: <User size={18} />, key: "profile" },
+    { name: "Assignments", icon: <FileText size={20} />, key: "assignments" },
+    { name: "Group Info", icon: <Users size={20} />, key: "groups" },
+    { name: "Profile", icon: <User size={20} />, key: "profile" },
   ];
 
   const links = role === "admin" ? adminLinks : studentLinks;
 
   return (
-    <div className="h-screen w-60 bg-white shadow-lg flex flex-col justify-between">
-      <div>
-        <div className="p-6 text-3xl font-bold text-blue-600">Joineazy</div>
+    <>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="lg:hidden fixed top-4 left-4 z-50 bg-white p-3 rounded-xl shadow-lg"
+      >
+        {isOpen ? <X size={24} className="text-gray-700" /> : <Menu size={24} className="text-gray-700" />}
+      </button>
 
-        <nav className="mt-6">
-          {links.map((link) => (
-            <div
-              key={link.key}
-              onClick={() => setActiveTab(link.key)}
-              className={`flex items-center gap-3 p-5 text-gray-700 cursor-pointer hover:bg-blue-50 transition ${
-                activeTab === link.key
-                  ? "bg-blue-100 text-blue-600 font-semibold"
-                  : ""
-              }`}
-            >
-              {link.icon}
-              <span>{link.name}</span>
+      {isOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-30"
+          onClick={() => setIsOpen(false)}
+        ></div>
+      )}
+
+  
+      <div
+        className={`fixed lg:static inset-y-0 left-0 z-40 h-screen w-72 bg-white shadow-xl flex flex-col justify-between border-r border-gray-100 transition-transform duration-300 ${
+          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        }`}
+      >
+        <div>
+          <div className="p-6 border-b border-gray-100">
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Joineazy
+              </h1>
             </div>
-          ))}
-        </nav>
-      </div>
+            <p className="text-gray-500 text-sm mt-2 ml-1">
+              {role === "admin" ? "Admin Dashboard" : "Student Portal"}
+            </p>
+          </div>
 
-      <div className="p-6 border-t">
-        <button
-          onClick={() => {
-            localStorage.clear();
-            if (onLogout) onLogout();
-          }}
-          className="flex gap-2 text-blue-600 hover:text-blue-800 transition"
-        >
-          <LogOut size={18} />
-          <span>Logout</span>
-        </button>
+          <nav className="mt-4 px-3">
+            {links.map((link) => (
+              <div
+                key={link.key}
+                onClick={() => {
+                  setActiveTab(link.key);
+                  setIsOpen(false);
+                }}
+                className={`flex items-center gap-4 p-4 mb-2 rounded-xl transition-all duration-200 ${
+                  activeTab === link.key
+                    ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg"
+                    : "text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                <div className={activeTab === link.key ? "" : "text-gray-500"}>
+                  {link.icon}
+                </div>
+                <span className="font-medium">{link.name}</span>
+              </div>
+            ))}
+          </nav>
+        </div>
+
+        <div className="p-6 border-t border-gray-100">
+          <button
+            onClick={() => {
+              localStorage.clear();
+              if (onLogout) onLogout();
+            }}
+            className="flex items-center gap-3 w-full p-4 text-gray-700 hover:bg-red-50 hover:text-red-600 transition-all duration-200 rounded-xl font-medium"
+          >
+            <LogOut size={20} />
+            <span>Logout</span>
+          </button>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
