@@ -196,7 +196,6 @@ app.post("/api/submissions", async (req, res) => {
   }
 });
 
-
 // ~ GROUP ROUTES ~
 
 // Create a new group

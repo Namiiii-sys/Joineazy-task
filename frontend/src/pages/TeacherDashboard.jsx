@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
-import { PlusCircle, FileText, Users, User } from "lucide-react";
+import { PlusCircle, FileText, Users, Activity } from "lucide-react";
 import Profile from "../components/Profile";
 import AdminGroups from "../components/AdminGroups";
 import axios from "axios";
@@ -16,17 +16,24 @@ export default function TeacherDashboard() {
     title: "",
     deadline: "",
     driveLink: "",
-    file: null,
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     fetchAssignments();
   }, []);
 
   const fetchAssignments = async () => {
     try {
       const res = await axios.get("https://joineazy-backend.vercel.app/api/assignments");
-      setAssignments(res.data);
+      
+      // adding dummy analytics for visual representation
+
+      const dataWithAnalytics = res.data.map((a) => ({
+        ...a,
+        totalStudents: Math.floor(Math.random() * 25) + 10,
+        submitted: Math.floor(Math.random() * 15), 
+      }));
+      setAssignments(dataWithAnalytics);
     } catch (err) {
       console.error("Error fetching assignments:", err);
       console.log(motion)
@@ -51,13 +58,13 @@ export default function TeacherDashboard() {
         description: "Uploaded through dashboard",
         deadline: newAssignment.deadline,
         driveLink: newAssignment.driveLink,
-        teacherId: localStorage.getItem("userId"),
-        Status: "Active",
+        createdBy: localStorage.getItem("userId"),
+        status: "Active",
       });
 
       toast.success("Assignment created successfully!");
       setShowModal(false);
-      setNewAssignment({ title: "", deadline: "", driveLink: "", file: null });
+      setNewAssignment({ title: "", deadline: "", driveLink: "" });
       fetchAssignments();
     } catch (err) {
       console.error("Error creating assignment:", err);
@@ -65,23 +72,36 @@ export default function TeacherDashboard() {
     }
   };
 
+  const renderAnalyticsBar = (submitted, total) => {
+    const percentage = total ? Math.min((submitted / total) * 100, 100) : 0;
+    return (
+      <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+        <div
+          className="h-2.5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-500"
+          style={{ width: `${percentage}%` }}
+        ></div>
+      </div>
+    );
+  };
+
   const showContent = () => {
     if (activeTab === "assignments") {
       return (
         <div className="max-w-6xl mx-auto">
           <Toaster position="top-center" richColors />
-
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
             <div>
               <h2 className="text-3xl sm:text-4xl font-bold text-gray-800 flex items-center gap-3">
-                  <FileText className="text-blue-800" size={28} />
-                Assignments
+                <FileText className="text-blue-800" size={28} />
+                Assignments Overview
               </h2>
-              <p className="text-gray-500 mt-2">Manage and create assignments</p>
+              <p className="text-gray-500 mt-1 text-sm">
+                Track submissions and manage active assignments
+              </p>
             </div>
             <button
               onClick={() => setShowModal(true)}
-              className="bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg px-5 py-3 rounded-xl flex items-center gap-2 hover:bg-blue-700 transition-colors font-semibold shadow-md hover:shadow-lg whitespace-nowrap"
+              className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-5 py-3 rounded-xl flex items-center gap-2 font-semibold hover:from-blue-600 hover:to-purple-700 transition-all shadow-md hover:shadow-lg"
             >
               <PlusCircle size={20} />
               Create Assignment
@@ -95,56 +115,78 @@ export default function TeacherDashboard() {
               </div>
               <p className="text-gray-600 text-lg">No assignments yet.</p>
               <p className="text-gray-400 text-sm mt-2">
-                Create new assignment.
+                Create a new assignment.
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {assignments.map((a) => (
-                <motion.div
-                  key={a.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200"
-                >
-                  <h3 className="text-xl font-bold text-gray-800 mb-3">{a.title}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {assignments.map((a) => {
+                const progress = Math.min(
+                  (a.submitted / a.totalStudents) * 100,
+                  100
+                ).toFixed(0);
 
-                  <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">Deadline:</span>
-                      <span>{new Date(a.deadline).toLocaleDateString()}</span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">Status:</span>
+                return (
+                  <motion.div
+                    key={a.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-shadow duration-300"
+                  >
+                    <div className="flex justify-between items-start">
+                      <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                        {a.title}
+                      </h3>
                       <span
-                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                        className={`px-3 py-1 text-xs font-semibold rounded-full ${
                           a.status === "Active"
                             ? "bg-green-100 text-green-700"
                             : a.status === "Pending"
-                            ? "bg-orange-100 text-orange-700"
-                            : "bg-gray-100 text-gray-700"
+                            ? "bg-yellow-100 text-yellow-700"
+                            : "bg-gray-100 text-gray-600"
                         }`}
                       >
                         {a.status}
                       </span>
                     </div>
-                  </div>
 
-                  {a.driveLink && (
-                    <a
-                      href={a.driveLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-blue-600 text-sm font-medium hover:text-blue-700 transition-colors"
-                    >
-                      <span></span>
-                      Open Drive Folder
-                    </a>
-                  )}
-                </motion.div>
-              ))}
+                    <p className="text-gray-600 text-sm mb-3">
+                      Deadline:{" "}
+                      <span className="font-medium text-gray-800">
+                        {new Date(a.deadline).toLocaleDateString()}
+                      </span>
+                    </p>
+
+                    {a.driveLink && (
+                      <a
+                        href={a.driveLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 text-sm underline hover:text-blue-800"
+                      >
+                        Open Drive Folder
+                      </a>
+                    )}
+
+                    <div className="mt-5">
+                      <div className="flex justify-between text-sm text-gray-600">
+                        <div className="flex items-center gap-1">
+                          <Users size={16} />
+                          <span>
+                            {a.submitted}/{a.totalStudents} Submissions
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Activity size={15} />
+                          <span>{progress}% Completed</span>
+                        </div>
+                      </div>
+                      {renderAnalyticsBar(a.submitted, a.totalStudents)}
+                    </div>
+                  </motion.div>
+                );
+              })}
             </div>
           )}
 
@@ -179,9 +221,10 @@ export default function TeacherDashboard() {
                         value={newAssignment.title}
                         onChange={handleChange}
                         placeholder="Assignment title"
-                        className="border-2 border-gray-200 p-3 w-full rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all"
+                        className="border-2 border-gray-200 p-3 w-full rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
                       />
                     </div>
+
                     <div>
                       <label className="block text-gray-700 font-medium mb-2 text-sm">
                         Deadline
@@ -191,7 +234,7 @@ export default function TeacherDashboard() {
                         name="deadline"
                         value={newAssignment.deadline}
                         onChange={handleChange}
-                        className="border-2 border-gray-200 p-3 w-full rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all"
+                        className="border-2 border-gray-200 p-3 w-full rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
                       />
                     </div>
 
@@ -204,7 +247,8 @@ export default function TeacherDashboard() {
                         name="driveLink"
                         value={newAssignment.driveLink}
                         onChange={handleChange}
-                        className="border-2 border-gray-200 p-3 w-full rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all"
+                        placeholder="https://drive.google.com/..."
+                        className="border-2 border-gray-200 p-3 w-full rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
                       />
                     </div>
 
@@ -232,12 +276,9 @@ export default function TeacherDashboard() {
       );
     }
 
-    if (activeTab === "groups") {
-      return <AdminGroups />;
-    }
-    if (activeTab === "profile") {
-      return <Profile role="admin" />;
-    }
+    if (activeTab === "groups") return <AdminGroups />;
+    if (activeTab === "profile") return <Profile role="admin" />;
+    if (activeTab === "courses") return <Courses role="admin" />;
   };
 
   return (
