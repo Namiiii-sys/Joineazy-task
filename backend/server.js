@@ -9,9 +9,23 @@ const prisma = new PrismaClient()
 
 app.use(express.json())
 app.use(cors({
-  allowedHeaders:["Content-Type","Authorization"],
-  origin: ["http://localhost:5173","https://joineazy-frontend.vercel.app"]
-}))
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      "http://localhost:5173",
+      "https://joineazy-frontend.vercel.app"
+    ];
+    
+    if (!origin) return callback(null, true);
+        if (allowedOrigins.includes(origin) || origin.match(/^https:\/\/joineazy-frontend-.*\.vercel\.app$/)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true
+}));
 
 app.post("/api/register", async (req, res) => {
   const { name, email, password, role } = req.body
