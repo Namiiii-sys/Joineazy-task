@@ -19,6 +19,7 @@ model User {
   createdAt     DateTime     @default(now())
   Assignment    Assignment[]
   submissions   Submission[]
+  courses       Course[] 
 }
 
 model Group {
@@ -43,8 +44,21 @@ model Assignment {
   status      String       @default("Active")
   submissions Submission[]
   type        String   @default("individual")
-
+  courseId     Int
+  course       Course   @relation(fields: [courseId], references: [id])
 }
+
+model Course {
+  id         Int         @id @default(autoincrement())
+  name       String
+  code      String       @unique
+  teacherId Int
+  teacher   User         @relation(fields: [teacherId], references: [id])
+  createdAt DateTime     @default(now())
+  assignments Assignment[]
+}
+
+
 
 model Submission {
   id           Int         @id @default(autoincrement())

@@ -1,146 +1,206 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { BookOpen, Users, ClipboardCheck } from "lucide-react";
+import axios from "axios";
+import { motion, AnimatePresence } from "framer-motion";
+import { BookOpen, PlusCircle, Trash, ChevronRight, Users } from "lucide-react";
+import { toast, Toaster } from "sonner";
 
-export default function Courses({ role }) {
+export default function Courses({ role, onCourseClick }) {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [form, setForm] = useState({ name: "", code: "" });
+
+  const teacherId = localStorage.getItem("userId");
 
   useEffect(() => {
     fetchCourses();
-  },[]);
+  }, []);
 
   const fetchCourses = async () => {
     try {
-      const dummyData =
-        role === "admin"
-          ? [
-              {
-                id: 1,
-                name: "Data Mining",
-                code: "WD101",
-                studentCount: 28,
-                submissionRate: 82,
-              },
-              {
-                id: 2,
-                name: "Data Mining",
-                code: "WD101",
-                studentCount: 28,
-                submissionRate: 75,
-              },
-              {
-                id: 3,
-                name: "DBMS",
-                code: "DS203",
-                studentCount: 30,
-                submissionRate: 67,
-              },
-            ]
-          : [
-              {
-                id: 1,
-                name: "Data Mining",
-                code: "WD101",
-                instructor: "Prof. Sharma",
-                progress: 75,
-              },
-              {
-                id: 2,
-                name: "Operating Systems",
-                code: "DS202",
-                instructor: "Dr. Mehta",
-                progress: 50,
-              },
-            ];
-
-      setCourses(dummyData);
+      const res = await axios.get("http://localhost:5000/api/courses");
+      setCourses(Array.isArray(res.data) ? res.data : res.data.courses || []);
       setLoading(false);
     } catch (err) {
-      console.error("Error fetching courses:", err);
+      console.error(err);
       setLoading(false);
       console.log(motion)
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-[50vh] text-gray-600">
-        Loading courses...
-      </div>
-);
-  }
+  const createCourse = async (e) => {
+    e.preventDefault();
+    if (!form.name || !form.code) return toast.error("Fill all fields");
+
+    try {
+      await axios.post("http://localhost:5000/api/courses", {
+        ...form,
+        teacherId
+      });
+
+      toast.success("Course created!");
+      setShowModal(false);
+      setForm({ name: "", code: "" });
+      fetchCourses();
+    } catch (err) {
+      console.error(err);
+      toast.error("Error creating course");
+    }
+  };
+
+  const deleteCourse = async (id, e) => {
+    e.stopPropagation();
+    try {
+      await axios.delete(`http://localhost:5000/api/courses/${id}`);
+      toast.success("Deleted!");
+      fetchCourses();
+    } catch (err) {
+      console.error(err);
+      toast.error("Error deleting");
+    }
+  };
+
+  if (loading) return <div className="text-center text-gray-500 py-8">Loading courses...</div>;
 
   return (
     <div className="max-w-6xl mx-auto">
-      <h2 className="text-3xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-        <BookOpen className="text-purple-700" />{" "}
-        {role === "admin" ? "Courses You Teach" : "My Courses"}
-      </h2>
+      <Toaster position="top-center" richColors />
+      <div className="flex justify-between items-center mb-8">
+        <h2 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
+          <BookOpen className="text-purple-800" size={28} />
+          My Courses
+        </h2>
+
+        {role === "admin" && (
+          <button
+            onClick={() => setShowModal(true)}
+            className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-5 py-3 rounded-xl flex items-center gap-2 font-semibold hover:from-blue-600 hover:to-purple-700 transition-all shadow-md hover:shadow-lg"
+          >
+            <PlusCircle size={20} />
+            New Course
+          </button>
+        )}
+      </div>
 
       {courses.length === 0 ? (
-        <div className="bg-white p-12 rounded-2xl shadow-sm border text-center">
-          <BookOpen className="text-gray-400 mx-auto mb-4" size={40} />
-          <p className="text-gray-600 text-lg">No courses yet.</p>
+        <div className="text-center text-gray-500 py-12">
+          No courses available yet.
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {courses.map((course, index) => (
+          {courses.map((course) => (
             <motion.div
               key={course.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: index * 0.05 }}
-              className="bg-white rounded-2xl shadow-md p-6 border border-gray-100 hover:shadow-lg transition cursor-pointer"
-              onClick={() => {
-               localStorage.setItem("activeTab","assignments");
-               window.location.reload();
-            }}
+              transition={{ duration: 0.3 }}
+              onClick={() => onCourseClick && onCourseClick(course)}
+              className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all cursor-pointer group"
             >
-              <h3 className="text-xl font-bold text-gray-800 mb-2">
-                {course.name}
-              </h3>
-              <p className="text-gray-500 text-sm mb-4">Code: {course.code}</p>
-
-              {role === "admin" ? (
-                <>
-                  <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
-                    <div className="flex items-center gap-2">
-                      <Users size={16} /> {course.studentCount} Students
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <ClipboardCheck size={16} /> {course.submissionRate}%
-                      Submitted
-                    </div>
-                  </div>
-
-                  <div className="w-full bg-gray-200 h-2 rounded-full mt-2">
-                    <div
-                      className="bg-green-500 h-2 rounded-full"
-                      style={{ width: `${course.submissionRate}%` }}
-                    ></div>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <p className="text-sm text-gray-600 mb-2">
-                    Instructor: <span className="font-medium">{course.instructor}</span>
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-gray-800 mb-2 group-hover:text-purple-700 transition-colors">
+                    {course.name}
+                  </h3>
+                  <p className="text-sm text-gray-500 font-medium mb-3">
+                    Code: <span className="text-gray-700">{course.code}</span>
                   </p>
-                  <div className="w-full bg-gray-200 h-2 rounded-full mt-2">
-                    <div
-                      className="bg-blue-500 h-2 rounded-full"
-                      style={{ width: `${course.progress}%` }}
-                    ></div>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {course.progress}% Completed
-                  </p>
-                </>
-              )}
+                </div>
+
+                {role === "admin" && (
+                  <button
+                    onClick={(e) => deleteCourse(course.id, e)}
+                    className="text-red-400 hover:text-red-600 transition-colors p-2 hover:bg-red-50 rounded-lg"
+                  >
+                    <Trash size={18} />
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                <div className="flex items-center gap-2 text-gray-500 text-sm">
+                  <Users size={16} />
+                  <span>View Details</span>
+                </div>
+                <ChevronRight 
+                  size={20} 
+                  className="text-gray-400 group-hover:text-purple-600 group-hover:translate-x-1 transition-all" 
+                />
+              </div>
             </motion.div>
           ))}
         </div>
       )}
+
+      {/* MODAL */}
+      <AnimatePresence>
+        {showModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+            onClick={() => setShowModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white p-8 rounded-2xl w-full max-w-md shadow-2xl"
+            >
+              <h3 className="text-2xl font-bold mb-6 text-gray-800">Create New Course</h3>
+              <form onSubmit={createCourse} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Course Name
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g., Data Structures"
+                    className="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition-colors"
+                    value={form.name}
+                    onChange={(e) =>
+                      setForm({ ...form, name: e.target.value })
+                    }
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Course Code
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g., CS201"
+                    className="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition-colors"
+                    value={form.code}
+                    onChange={(e) =>
+                      setForm({ ...form, code: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowModal(false)}
+                    className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl font-semibold hover:from-blue-600 hover:to-purple-700 transition-all"
+                  >
+                    Create
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

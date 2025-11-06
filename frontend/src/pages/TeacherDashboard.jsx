@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
-import { PlusCircle, FileText, Users, Activity } from "lucide-react";
-import Profile from "../components/Profile";
 import Courses from "../components/Courses";
+import { PlusCircle, FileText, Users, Activity, Trash } from "lucide-react";
+import Profile from "../components/Profile";
 import AdminGroups from "../components/AdminGroups";
 import axios from "axios";
 import { Toaster, toast } from "sonner";
@@ -12,27 +12,42 @@ export default function TeacherDashboard() {
   const [activeTab, setActiveTab] = useState("assignments");
   const [showModal, setShowModal] = useState(false);
   const [assignments, setAssignments] = useState([]);
+  const [courses, setCourses] = useState([]);
 
   const [newAssignment, setNewAssignment] = useState({
     title: "",
     deadline: "",
     driveLink: "",
+    type: "individual",
+    courseId: "", 
   });
+
+  const teacherId = localStorage.getItem("userId");
 
   useEffect(() => {
     fetchAssignments();
+    fetchCourses();
   }, []);
+
+  const fetchCourses = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/api/courses", {
+        params: { teacherId },
+      });
+      setCourses(res.data.courses || []);
+    } catch (err) {
+      console.error("Error fetching courses:", err);
+    }
+  };
 
   const fetchAssignments = async () => {
     try {
       const res = await axios.get("http://localhost:5000/api/assignments");
-      
-      // adding dummy analytics for visual representation
-
-      const dataWithAnalytics = res.data.map((a) => ({
+      // adding dummy analytics for visuals
+      const dataWithAnalytics = (res.data || []).map((a) => ({
         ...a,
         totalStudents: Math.floor(Math.random() * 25) + 10,
-        submitted: Math.floor(Math.random() * 15), 
+        submitted: Math.floor(Math.random() * 15),
       }));
       setAssignments(dataWithAnalytics);
     } catch (err) {
@@ -41,49 +56,55 @@ export default function TeacherDashboard() {
     }
   };
 
+  const deleteAssignment = async (assignmentId, e) => {
+    e.stopPropagation();
+    
+    if (!window.confirm("Are you sure you want to delete this assignment?")) {
+      return;
+    }
+
+    try {
+      await axios.delete(`http://localhost:5000/api/assignments/${assignmentId}`);
+      toast.success("Assignment deleted successfully!");
+      fetchAssignments();
+    } catch (err) {
+      console.error("Error deleting assignment:", err);
+      toast.error("Failed to delete assignment");
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setNewAssignment({ ...newAssignment, [name]: value });
+    setNewAssignment((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleAddAssignment = async (e) => {
     e.preventDefault();
-    if (!newAssignment.title || !newAssignment.deadline) {
-      toast.error("Please fill all fields!");
+    const { title, deadline, type, courseId } = newAssignment;
+    if (!title || !deadline || !type || !courseId) {
+      toast.error("Please fill all fields, including Course and Type");
       return;
     }
-
     try {
       await axios.post("http://localhost:5000/api/assignments", {
         title: newAssignment.title,
         description: "Uploaded through dashboard",
         deadline: newAssignment.deadline,
         driveLink: newAssignment.driveLink,
-        teacherId: parseInt(localStorage.getItem("userId")),
-        status: "Active",
+        teacherId,               
         type: newAssignment.type,
+        courseId: parseInt(newAssignment.courseId),
+        status: "Active",
       });
 
       toast.success("Assignment created successfully!");
       setShowModal(false);
-      setNewAssignment({ title: "", deadline: "", driveLink: "" });
+      setNewAssignment({ title: "", deadline: "", driveLink: "", type: "individual", courseId: "" });
       fetchAssignments();
     } catch (err) {
       console.error("Error creating assignment:", err);
       toast.error("Something went wrong while saving assignment!");
     }
-  };
-
-  const renderAnalyticsBar = (submitted, total) => {
-    const percentage = total ? Math.min((submitted / total) * 100, 100) : 0;
-    return (
-      <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
-        <div
-          className="h-2.5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-500"
-          style={{ width: `${percentage}%` }}
-        ></div>
-      </div>
-    );
   };
 
   const showContent = () => {
@@ -136,26 +157,35 @@ export default function TeacherDashboard() {
                     transition={{ duration: 0.3 }}
                     className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-shadow duration-300"
                   >
-                    <div className="flex justify-between items-start">
-                      <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                      {a.title}{" "}
-                      <span className="ml-2 px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-600">
-                      {a.type === "group" ? "Group" : "Individual"}
-                      </span>
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="text-xl font-semibold text-gray-800">
+                        {a.title}
                       </h3>
-
-                      <span
-                        className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                          a.status === "Active"
-                            ? "bg-green-100 text-green-700"
-                            : a.status === "Pending"
-                            ? "bg-yellow-100 text-yellow-700"
-                            : "bg-gray-100 text-gray-600"
-                        }`}
-                      >
-                        {a.status}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`px-3 py-1 text-xs font-semibold rounded-full ${
+                            a.status === "Active"
+                              ? "bg-green-100 text-green-700"
+                              : a.status === "Pending"
+                              ? "bg-yellow-100 text-yellow-700"
+                              : "bg-gray-100 text-gray-600"
+                          }`}
+                        >
+                          {a.status}
+                        </span>
+                        <button
+                          onClick={(e) => deleteAssignment(a.id, e)}
+                          className="text-red-400 hover:text-red-600 transition-colors p-2 hover:bg-red-50 rounded-lg"
+                          title="Delete assignment"
+                        >
+                          <Trash size={18} />
+                        </button>
+                      </div>
                     </div>
+
+                    <p className="text-gray-600 text-sm mb-2">
+                      Type: <span className="font-medium">{a.type || "individual"}</span>
+                    </p>
 
                     <p className="text-gray-600 text-sm mb-3">
                       Deadline:{" "}
@@ -188,7 +218,12 @@ export default function TeacherDashboard() {
                           <span>{progress}% Completed</span>
                         </div>
                       </div>
-                      {renderAnalyticsBar(a.submitted, a.totalStudents)}
+                      <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                        <div
+                          className="h-2.5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-500"
+                          style={{ width: `${progress}%` }}
+                        ></div>
+                      </div>
                     </div>
                   </motion.div>
                 );
@@ -245,20 +280,38 @@ export default function TeacherDashboard() {
                     </div>
 
                     <div>
-                    <label className="block text-gray-700 font-medium mb-2 text-sm">
-                      Assignment Type
-                    </label>
-                    <select
-                      name="type"
-                      value={newAssignment.type || "individual"}
-                      onChange={handleChange}
-                      className="border-2 border-gray-200 p-3 w-full rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all"
-                    >
-                    <option value="individual">Individual</option>
-                    <option value="group">Group</option>
-                    </select>
+                      <label className="block text-gray-700 font-medium mb-2 text-sm">
+                        Assignment Type
+                      </label>
+                      <select
+                        name="type"
+                        value={newAssignment.type}
+                        onChange={handleChange}
+                        className="border-2 border-gray-200 p-3 w-full rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
+                      >
+                        <option value="individual">Individual</option>
+                        <option value="group">Group</option>
+                      </select>
                     </div>
 
+                    <div>
+                      <label className="block text-gray-700 font-medium mb-2 text-sm">
+                        Course
+                      </label>
+                      <select
+                        name="courseId"
+                        value={newAssignment.courseId}
+                        onChange={handleChange}
+                        className="border-2 border-gray-200 p-3 w-full rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
+                      >
+                        <option value="">Select a course</option>
+                        {courses.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.name} ({c.code})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
                     <div>
                       <label className="block text-gray-700 font-medium mb-2 text-sm">
@@ -300,7 +353,10 @@ export default function TeacherDashboard() {
 
     if (activeTab === "groups") return <AdminGroups />;
     if (activeTab === "profile") return <Profile role="admin" />;
-    if (activeTab === "courses") return <Courses role="admin" />;
+    if (activeTab === "courses") return <Courses role="admin" onCourseClick={(course) => {
+      setActiveTab("assignments");
+      console.log(course)
+    }} />;
   };
 
   return (

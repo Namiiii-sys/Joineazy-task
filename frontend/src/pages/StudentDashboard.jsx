@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Sidebar from "../components/Sidebar";
 import Profile from "../components/Profile";
 import Groups from "../components/Groups";
@@ -17,71 +17,73 @@ export default function StudentDashboard() {
   const [driveLink, setDriveLink] = useState("");
   const [isLeader, setIsLeader] = useState(false);
 
-  const userId = parseInt(localStorage.getItem("userId"));
+const userId = parseInt(localStorage.getItem("userId"));
 
-  useEffect(() => {
-    fetchAssignments();
-    fetchSubmissions();
-    checkIfLeader();
-  }, []);
+const fetchAssignments = useCallback(async () => {
+  try {
+    const res = await axios.get("http://localhost:5000/api/assignments");
+    const grouped = res.data.reduce((acc, a) => {
+      const course = a.course ? a.course.name : "General Course";
+      if (!acc[course]) acc[course] = [];
+      acc[course].push(a);
+      return acc;
+    }, {});
+    setAssignments(grouped);
+  } catch (err) {
+    console.error("Error fetching assignments:", err);
+  }
+}, []);
 
-  const fetchAssignments = async () => {
-    try {
-      const res = await axios.get("http://localhost:5000/api/assignments");
-      const grouped = res.data.reduce((acc, a) => {
-        const course = a.title.split(" ")[0] || "General Course";
-        if (!acc[course]) acc[course] = [];
-        acc[course].push(a);
-        return acc;
-      }, {});
-      setAssignments(grouped);
-    } catch (err) {
-      console.error("Error fetching assignments:", err);
+const fetchSubmissions = useCallback(async () => {
+  try {
+    const res = await axios.get(`http://localhost:5000/api/submissions/${userId}`);
+    setSubmissions(res.data); 
+  } catch (err) {
+    console.error("Error fetching submissions:", err);
+  }
+}, [userId]);
+
+
+const checkIfLeader = useCallback(async () => {
+  try {
+    const res = await axios.get(`http://localhost:5000/api/groups/user/${userId}`);
+    if (res.data.group && res.data.group.creatorId === userId) {
+      setIsLeader(true);
+    } else {
+      setIsLeader(false);
     }
-  };
+  } catch (err) {
+    console.error("Error checking group leader:", err);
+    console.log(motion)
+  }
+}, [userId]);
 
-  const fetchSubmissions = async () => {
-    try {
-      const res = await axios.get("http://localhost:5000/api/submissions");  
-      setSubmissions(res.data);
-    } catch (err) {
-      console.error("Error fetching submissions:", err);
-    }
-  };
+useEffect(() => {
+  fetchAssignments();
+  fetchSubmissions();
+  checkIfLeader();
+}, [fetchAssignments, fetchSubmissions, checkIfLeader]);
 
-  const checkIfLeader = async () => {
-    try {
-      const res = await axios.get(`http://localhost:5000/api/groups/user/${userId}`);
-      if (res.data.group && res.data.group.creatorId === userId) {
-        setIsLeader(true);
-      } else {
-        setIsLeader(false);
-      }
-    } catch (err) {
-      console.error("Error checking group leader:", err);
-      console.log(motion)
-    }
-  };
+ const handleSubmitAssignment = async () => {
+  if (!driveLink.trim()) return toast.error("Please enter your Drive link");
 
-  const handleSubmitAssignment = async () => {
-    if (!driveLink.trim()) return toast.error("Please enter your Drive link");
+  try {
+    const res = await axios.post("http://localhost:5000/api/submissions", {
+      studentId: userId,
+      assignmentId: selectedAssignment.id,
+      driveLink,
+    });
 
-    try {
-      const res = await axios.post("http://localhost:5000/api/submissions", {
-        studentId: userId,
-        assignmentId: selectedAssignment.id,
-        driveLink,
-      });
-
-      toast.success(res.data.message);
-      setShowModal(false);
-      setDriveLink("");
-      fetchSubmissions();
-    } catch (error) {
-      console.error("Error submitting:", error);
-      toast.error("Failed to submit. Try again!");
-    }
-  };
+    console.log("Submission response:", res.data); 
+    toast.success(res.data.message);
+    setShowModal(false);
+    setDriveLink("");
+    await fetchSubmissions();
+  } catch (error) {
+    console.error("Error submitting:", error.response?.data || error);
+    toast.error(error.response?.data?.message || "Failed to submit. Try again!");
+  }
+};
 
   const hasSubmitted = (assignmentId) => 
     submissions.some((s) => s.assignmentId === assignmentId); 
@@ -122,9 +124,7 @@ export default function StudentDashboard() {
             ) : (
               Object.entries(assignments).map(([course, courseAssignments]) => (
                 <div key={course} className="mb-8">
-                  <h3 className="text-xl font-semibold text-blue-700 mb-4">
-                    {course} Course
-                  </h3>
+                  
 
                   <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2">
                     {courseAssignments.map((a) => {
@@ -151,6 +151,12 @@ export default function StudentDashboard() {
                             {a.title}
                           </h4>
 
+                          {a.course && (
+                          <p className="text-sm text-gray-500 mb-2">
+                            Course: <span className="font-medium text-gray-700">{a.course.name}</span>
+                          </p>
+                          )}
+                          
                           <p className="text-gray-600 text-sm mb-3">
                             {a.description}
                           </p>
@@ -258,7 +264,10 @@ export default function StudentDashboard() {
         );
 
       case "courses":
-        return <Courses role="student" />;
+       return <Courses role="student" onCourseClick={(course) => {
+        setActiveTab("assignments");
+        console.log(course)
+      }} />;
       case "team":
         return <Groups role="student" userId={userId} />;
       case "profile":

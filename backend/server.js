@@ -112,11 +112,10 @@ app.get("/", (req, res) => {
 
 // creating assgn
 app.post("/api/assignments", async (req, res) => {
-   console.log("Incoming data:", req.body);
-  let { title, description, deadline, driveLink, teacherId, type } = req.body;
+  console.log("Incoming data:", req.body);
+  let { title, description, deadline, driveLink, teacherId, type = "individual", courseId } = req.body;
 
   try {
-    console.log(" Incoming data:", req.body);
     const parsedTeacherId = parseInt(teacherId);
     if (isNaN(parsedTeacherId)) {
       return res.status(400).json({ message: "teacherId must be a valid number" });
@@ -130,17 +129,26 @@ app.post("/api/assignments", async (req, res) => {
       return res.status(404).json({ message: "Invalid" });
     }
 
-    const newAssignment = await prisma.assignment.create({
-      data: {
-        title,
-        description,
-         deadline: new Date(deadline),
-        createdBy: parsedTeacherId,
-        driveLink,
-        status: "Active",
-        type: type || "individual",
-      },
-    });
+    let data = {
+      title,
+      description,
+      deadline: new Date(deadline),
+      createdBy: parsedTeacherId,
+      driveLink,
+      status: "Active",
+      type, 
+    };
+
+    if (courseId) {
+      const parsedCourseId = parseInt(courseId);
+      const course = await prisma.course.findUnique({ where: { id: parsedCourseId } });
+      if (!course) {
+        return res.status(400).json({ message: "Invalid courseId" });
+      }
+      data.courseId = parsedCourseId;
+    }
+
+    const newAssignment = await prisma.assignment.create({ data });
 
     console.log("Assignment created:", newAssignment);
     res.json({ message: "Assignment created successfully!", assignment: newAssignment });
@@ -150,20 +158,60 @@ app.post("/api/assignments", async (req, res) => {
   }
 });
 
-
-// getting all assigns 
-app.get("/api/assignments", async (req, res) => {
+// Creating course (teacher only)
+app.post("/api/courses", async (req, res) => {
   try {
-    const assignments = await prisma.assignment.findMany({
-      orderBy: { createdAt: "desc" },
+    const { name, code, teacherId } = req.body;
+    if (!name || !code || !teacherId) {
+      return res.status(400).json({ message: "name, code, teacherId are required" });
+    }
+
+    const teacher = await prisma.user.findUnique({ where: { id: parseInt(teacherId) } });
+    if (!teacher || teacher.role !== "admin") {
+      return res.status(403).json({ message: "Only admins/teachers can create courses" });
+    }
+
+    const course = await prisma.course.create({
+      data: {
+        name,
+        code,
+        teacherId: parseInt(teacherId),
+      },
     });
 
-    res.json(assignments);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Error fetching assignments" });
+    res.json({ message: "Course created", course });
+  } catch (err) {
+    console.error("Error creating course:", err);
+    res.status(500).json({ message: "Error creating course" });
   }
- });
+});
+
+// Listing courses
+app.get("/api/courses", async (req, res) => {
+  try {
+    const { teacherId } = req.query;
+    const where = teacherId ? { teacherId: parseInt(teacherId) } : {};
+    const courses = await prisma.course.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+    });
+    res.json({ courses });
+  } catch (err) {
+    console.error("Error fetching courses:", err);
+    res.status(500).json({ message: "Error fetching courses" });
+  }
+});
+
+app.delete("/api/courses/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    await prisma.course.delete({ where: { id: parseInt(id) } });
+    res.json({ message: "Course deleted" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Error deleting" });
+  }
+});
 
  // Submit assigns
 app.post("/api/submissions", async (req, res) => {
@@ -196,10 +244,49 @@ app.post("/api/submissions", async (req, res) => {
   }
 });
 
-app.get("/api/submissions", async(req,res)=>{
-  const data = await prisma.submission.findMany();
-  res.json(data);
-})
+// fetch submissions 
+app.get("/api/submissions/:studentId", async (req, res) => {
+  const { studentId } = req.params;
+  try {
+    const subs = await prisma.submission.findMany({
+      where: { studentId: parseInt(studentId) }
+    });
+    res.json(subs);
+  } catch (err) {
+    console.error("Error fetching submissions:", err);
+    res.status(500).json({ message: "Error fetching submissions" });
+  }
+});
+
+
+app.get("/api/assignments", async (req, res) => {
+  try {
+    const assignments = await prisma.assignment.findMany({
+      include: {
+        course: true  
+      }
+    });
+    res.json(assignments);
+  } catch (err) {
+    console.error("Error fetching assignments:", err);
+    res.status(500).json({ message: "Error fetching assignments" });
+  }
+});
+
+// delete assigns
+app.delete("/api/assignments/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    await prisma.assignment.delete({ 
+      where: { id: parseInt(id) } 
+    });
+    res.json({ message: "Assignment deleted successfully" });
+  } catch (err) {
+    console.error("Error deleting assignment:", err);
+    res.status(500).json({ message: "Error deleting assignment" });
+  }
+});
+
 
 
 // ~ GROUP ROUTES ~
@@ -377,6 +464,7 @@ app.post("/api/groups/add-member", async (req, res) => {
     res.status(500).json({ success: false, message: "User not Found or already Registered!" });
   }
 });
+
 
 // fetch (for admin)
 app.get("/api/admin/groups", async (req, res) => {
