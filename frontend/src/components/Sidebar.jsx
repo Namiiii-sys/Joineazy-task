@@ -52,7 +52,6 @@ export default function Sidebar({ role, activeTab, setActiveTab, onLogout }) {
         ></div>
       )}
 
-      {/* Sidebar main */}
       <div
         className={`fixed lg:static inset-y-0 left-0 z-40 h-screen w-72 bg-white shadow-xl flex flex-col justify-between border-r border-gray-100 transition-transform duration-300 ${
           isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"

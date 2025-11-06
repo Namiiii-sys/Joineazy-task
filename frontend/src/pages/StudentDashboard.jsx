@@ -10,20 +10,24 @@ import { Toaster, toast } from "sonner";
 
 export default function StudentDashboard() {
   const [activeTab, setActiveTab] = useState("assignments");
-  const [assignments, setAssignments] = useState([]);
+  const [assignments, setAssignments] = useState({});
+  const [submissions, setSubmissions] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [selectedAssignment, setSelectedAssignment] = useState(null);
   const [driveLink, setDriveLink] = useState("");
+  const [isLeader, setIsLeader] = useState(false);
 
-  const userId = localStorage.getItem("userId");
+  const userId = parseInt(localStorage.getItem("userId"));
 
   useEffect(() => {
     fetchAssignments();
+    fetchSubmissions();
+    checkIfLeader();
   }, []);
 
   const fetchAssignments = async () => {
     try {
-      const res = await axios.get("https://joineazy-backend.vercel.app/api/assignments");
+      const res = await axios.get("http://localhost:5000/api/assignments");
       const grouped = res.data.reduce((acc, a) => {
         const course = a.title.split(" ")[0] || "General Course";
         if (!acc[course]) acc[course] = [];
@@ -33,6 +37,28 @@ export default function StudentDashboard() {
       setAssignments(grouped);
     } catch (err) {
       console.error("Error fetching assignments:", err);
+    }
+  };
+
+  const fetchSubmissions = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/api/submissions");  
+      setSubmissions(res.data);
+    } catch (err) {
+      console.error("Error fetching submissions:", err);
+    }
+  };
+
+  const checkIfLeader = async () => {
+    try {
+      const res = await axios.get(`http://localhost:5000/api/groups/user/${userId}`);
+      if (res.data.group && res.data.group.creatorId === userId) {
+        setIsLeader(true);
+      } else {
+        setIsLeader(false);
+      }
+    } catch (err) {
+      console.error("Error checking group leader:", err);
       console.log(motion)
     }
   };
@@ -50,14 +76,18 @@ export default function StudentDashboard() {
       toast.success(res.data.message);
       setShowModal(false);
       setDriveLink("");
+      fetchSubmissions();
     } catch (error) {
       console.error("Error submitting:", error);
       toast.error("Failed to submit. Try again!");
     }
   };
 
-  const renderProgress = (status) => {
-    if (status === "Completed")
+  const hasSubmitted = (assignmentId) => 
+    submissions.some((s) => s.assignmentId === assignmentId); 
+
+  const renderProgress = (assignmentId, status) => {
+    if (hasSubmitted(assignmentId))
       return (
         <div className="flex items-center gap-2 text-green-600 font-medium">
           <CheckCircle size={18} /> Submitted
@@ -71,7 +101,7 @@ export default function StudentDashboard() {
       );
     return (
       <div className="flex items-center gap-2 text-gray-500 font-medium">
-        ⏸ Not Started
+        Not Started
       </div>
     );
   };
@@ -82,27 +112,13 @@ export default function StudentDashboard() {
         return (
           <div className="max-w-5xl mx-auto">
             <Toaster position="top-center" richColors />
-
-            <div className="mb-8">
-              <h2 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
-                <BookOpen className="text-purple-800" size={28} />
-                My Courses & Assignments
-              </h2>
-              <p className="text-gray-500 text-sm mt-1">
-                View and submit your assignments. Track your progress visually.
-              </p>
-            </div>
+            <h2 className="text-3xl font-bold text-gray-800 flex items-center gap-3 mb-8">
+              <BookOpen className="text-purple-800" size={28} />
+              My Assignments
+            </h2>
 
             {Object.keys(assignments).length === 0 ? (
-              <div className="bg-white p-12 rounded-2xl shadow-sm border border-gray-100 text-center">
-                <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <BookOpen className="text-gray-400" size={40} />
-                </div>
-                <p className="text-gray-600 text-lg">No assignments yet.</p>
-                <p className="text-gray-400 text-sm mt-2">
-                  Check back later for new courses.
-                </p>
-              </div>
+              <div className="text-center text-gray-500">No assignments yet.</div>
             ) : (
               Object.entries(assignments).map(([course, courseAssignments]) => (
                 <div key={course} className="mb-8">
@@ -111,67 +127,79 @@ export default function StudentDashboard() {
                   </h3>
 
                   <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2">
-                    {courseAssignments.map((a) => (
-                      <motion.div
-                        key={a.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200"
-                      >
-                        <h4 className="text-lg font-semibold text-gray-800 mb-2">
-                          {a.title}
-                        </h4>
-                        <p className="text-gray-600 text-sm mb-3">
-                          {a.description || "No description provided."}
-                        </p>
+                    {courseAssignments.map((a) => {
+                      const submitted = hasSubmitted(a.id);
 
-                        <div className="flex justify-between items-center mb-3">
-                          <div className="text-sm text-gray-500">
-                            Deadline:{" "}
-                            <span className="font-medium text-gray-700">
-                              {new Date(a.deadline).toLocaleDateString()}
+                      const canSubmit =
+                        a.status === "Active" &&
+                        !submitted &&
+                        (a.type === "individual" || (a.type === "group" && isLeader)); // << FIX
+
+                      return (
+                        <motion.div
+                          key={a.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3 }}
+                          className={`p-6 rounded-2xl shadow-sm border ${
+                            submitted
+                              ? "bg-gray-100 border-gray-200 opacity-60"
+                              : "bg-white border-gray-100"
+                          }`}
+                        >
+                          <h4 className="text-lg font-semibold text-gray-800 mb-2">
+                            {a.title}
+                          </h4>
+
+                          <p className="text-gray-600 text-sm mb-3">
+                            {a.description}
+                          </p>
+
+                          <div className="flex justify-between items-center mb-3">
+                            <div className="text-sm text-gray-500">
+                              Deadline:{" "}
+                              <span className="font-medium text-gray-700">
+                                {new Date(a.deadline).toLocaleDateString()}
+                              </span>
+                            </div>
+                            {renderProgress(a.id, a.status)}
+                          </div>
+
+                          <div className="flex items-center gap-2 mb-3">
+                            <span className="font-medium">Type:</span>
+                            <span
+                              className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                a.type === "group"
+                                  ? "bg-purple-100 text-purple-700"
+                                  : "bg-blue-100 text-blue-700"
+                              }`}
+                            >
+                              {a.type}
                             </span>
                           </div>
-                          {renderProgress(a.status)}
-                        </div>
 
-                        <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
-                          <div
-                            className={`h-2.5 rounded-full transition-all duration-500 ${
-                              a.status === "Completed"
-                                ? "bg-green-500 w-full"
-                                : a.status === "Active"
-                                ? "bg-yellow-400 w-1/2"
-                                : "bg-gray-400 w-1/4"
-                            }`}
-                          ></div>
-                        </div>
-
-                        {a.driveLink && (
-                          <a
-                            href={a.driveLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 text-sm underline hover:text-blue-800"
-                          >
-                            View Assignment Details
-                          </a>
-                        )}
-
-                        {a.status === "Active" && (
-                          <button
-                            onClick={() => {
-                              setSelectedAssignment(a);
-                              setShowModal(true);
-                            }}
-                            className="mt-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition-all duration-200 w-full"
-                          >
-                            Submit Assignment
-                          </button>
-                        )}
-                      </motion.div>
-                    ))}
+                          {canSubmit ? (
+                            <button
+                              onClick={() => {
+                                setSelectedAssignment(a);
+                                setShowModal(true);
+                              }}
+                              className="mt-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-lg font-semibold w-full"
+                            >
+                              Submit Assignment
+                            </button>
+                          ) : submitted ? (
+                            <div className="mt-4 text-green-600 font-semibold text-center">
+                              Submitted
+                            </div>
+                          ) : a.type === "group" && !isLeader ? (
+                            <div className="mt-4 text-gray-400 text-center text-sm italic">
+                              Only group leader can submit
+                            </div>
+                          ) : null}
+                        </motion.div>
+                      );
+                    })}
                   </div>
                 </div>
               ))
@@ -200,27 +228,24 @@ export default function StudentDashboard() {
                       {selectedAssignment?.title}
                     </p>
 
-                    <label className="block text-gray-700 font-medium mb-2 text-sm">
-                      Google Drive Link
-                    </label>
                     <input
                       type="url"
                       value={driveLink}
                       onChange={(e) => setDriveLink(e.target.value)}
                       placeholder="https://drive.google.com/..."
-                      className="w-full border-2 border-gray-200 p-3 rounded-xl mb-6 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200"
+                      className="w-full border-2 border-gray-200 p-3 rounded-xl mb-6"
                     />
 
                     <div className="flex gap-3">
                       <button
                         onClick={() => setShowModal(false)}
-                        className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors duration-200 font-semibold"
+                        className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl"
                       >
                         Cancel
                       </button>
                       <button
                         onClick={handleSubmitAssignment}
-                        className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all duration-200 font-semibold shadow-md hover:shadow-lg"
+                        className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl"
                       >
                         Submit
                       </button>
@@ -234,13 +259,10 @@ export default function StudentDashboard() {
 
       case "courses":
         return <Courses role="student" />;
-
       case "team":
         return <Groups role="student" userId={userId} />;
-
       case "profile":
         return <Profile role="student" />;
-
       default:
         return null;
     }

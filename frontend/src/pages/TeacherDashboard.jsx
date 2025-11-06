@@ -24,7 +24,7 @@ export default function TeacherDashboard() {
 
   const fetchAssignments = async () => {
     try {
-      const res = await axios.get("https://joineazy-backend.vercel.app/api/assignments");
+      const res = await axios.get("http://localhost:5000/api/assignments");
       
       // adding dummy analytics for visual representation
 
@@ -53,13 +53,14 @@ export default function TeacherDashboard() {
     }
 
     try {
-      await axios.post("https://joineazy-backend.vercel.app/api/assignments", {
+      await axios.post("http://localhost:5000/api/assignments", {
         title: newAssignment.title,
         description: "Uploaded through dashboard",
         deadline: newAssignment.deadline,
         driveLink: newAssignment.driveLink,
-        createdBy: localStorage.getItem("userId"),
+        teacherId: parseInt(localStorage.getItem("userId")),
         status: "Active",
+        type: newAssignment.type,
       });
 
       toast.success("Assignment created successfully!");
@@ -136,8 +137,12 @@ export default function TeacherDashboard() {
                   >
                     <div className="flex justify-between items-start">
                       <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                        {a.title}
+                      {a.title}{" "}
+                      <span className="ml-2 px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-600">
+                      {a.type === "group" ? "Group" : "Individual"}
+                      </span>
                       </h3>
+
                       <span
                         className={`px-3 py-1 text-xs font-semibold rounded-full ${
                           a.status === "Active"
@@ -237,6 +242,22 @@ export default function TeacherDashboard() {
                         className="border-2 border-gray-200 p-3 w-full rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
                       />
                     </div>
+
+                    <div>
+                    <label className="block text-gray-700 font-medium mb-2 text-sm">
+                      Assignment Type
+                    </label>
+                    <select
+                      name="type"
+                      value={newAssignment.type || "individual"}
+                      onChange={handleChange}
+                      className="border-2 border-gray-200 p-3 w-full rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all"
+                    >
+                    <option value="individual">Individual</option>
+                    <option value="group">Group</option>
+                    </select>
+                    </div>
+
 
                     <div>
                       <label className="block text-gray-700 font-medium mb-2 text-sm">

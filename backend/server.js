@@ -111,10 +111,9 @@ app.get("/", (req, res) => {
 })
 
 // creating assgn
-
 app.post("/api/assignments", async (req, res) => {
    console.log("Incoming data:", req.body);
-  let { title, description, deadline, driveLink, teacherId } = req.body;
+  let { title, description, deadline, driveLink, teacherId, type } = req.body;
 
   try {
     console.log(" Incoming data:", req.body);
@@ -139,6 +138,7 @@ app.post("/api/assignments", async (req, res) => {
         createdBy: parsedTeacherId,
         driveLink,
         status: "Active",
+        type: type || "individual",
       },
     });
 
@@ -152,7 +152,7 @@ app.post("/api/assignments", async (req, res) => {
 
 
 // getting all assigns 
-  app.get("/api/assignments", async (req, res) => {
+app.get("/api/assignments", async (req, res) => {
   try {
     const assignments = await prisma.assignment.findMany({
       orderBy: { createdAt: "desc" },
@@ -195,6 +195,12 @@ app.post("/api/submissions", async (req, res) => {
     res.status(500).json({ message: "Error submitting assignment" });
   }
 });
+
+app.get("/api/submissions", async(req,res)=>{
+  const data = await prisma.submission.findMany();
+  res.json(data);
+})
+
 
 // ~ GROUP ROUTES ~
 

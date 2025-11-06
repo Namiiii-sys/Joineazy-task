@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { BookOpen, Users, ClipboardCheck } from "lucide-react";
 
@@ -17,14 +17,14 @@ export default function Courses({ role }) {
           ? [
               {
                 id: 1,
-                name: "Web Development",
+                name: "Data Mining",
                 code: "WD101",
                 studentCount: 28,
                 submissionRate: 82,
               },
               {
                 id: 2,
-                name: "Data Structures",
+                name: "Operating Systems",
                 code: "DS202",
                 studentCount: 25,
                 submissionRate: 67,
@@ -33,14 +33,14 @@ export default function Courses({ role }) {
           : [
               {
                 id: 1,
-                name: "Web Development",
+                name: "Data Mining",
                 code: "WD101",
                 instructor: "Prof. Sharma",
                 progress: 75,
               },
               {
                 id: 2,
-                name: "Data Structures",
+                name: "Operating Systems",
                 code: "DS202",
                 instructor: "Dr. Mehta",
                 progress: 50,
@@ -85,7 +85,6 @@ export default function Courses({ role }) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: index * 0.05 }}
               className="bg-white rounded-2xl shadow-md p-6 border border-gray-100 hover:shadow-lg transition cursor-pointer"
-              onClick={() => /assignments/} 
             >
               <h3 className="text-xl font-bold text-gray-800 mb-2">
                 {course.name}

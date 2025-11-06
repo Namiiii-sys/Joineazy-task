@@ -42,6 +42,8 @@ model Assignment {
   teacher     User         @relation(fields: [createdBy], references: [id])
   status      String       @default("Active")
   submissions Submission[]
+  type        String   @default("individual")
+
 }
 
 model Submission {
