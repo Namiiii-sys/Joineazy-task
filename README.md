@@ -1,28 +1,35 @@
 # Joineazy - Group-based Assignment Management System
 
-## 🧩 Overview
 
-**Joineazy** is a full-stack web application that simplifies assignment coordination between **professors and students** through group management, OneDrive integration, and submission tracking.  
-It provides separate dashboards for **students** and **admins (professors)** to streamline creation, submission, and monitoring of coursework.
+
+## Overview of UI/UX Design Choices
+
+This system was built with a very intentional **minimalist UX philosophy**.
+
+| UI/UX Choice | Reason |
+|--------------|--------|
+| Clean pastel gradients & whitespace | keeps the dashboard less stressful and easy to visually digest |
+| Cards for assignments/courses | reduces cognitive load, easier scanning than table format |
+| Progress bars & badges | visual feedback communicates faster than text feedback |
+| Modal based submission creation | avoids unnecessary page routing, keeps user context |
+| Subtle animations (Framer Motion) | makes interaction soft + modern without distracting |
+
+This helps both **students & teachers** complete academic workflows quickly.
 
 ---
 
-## 🚀 Features
+## JWT Based Authentication
 
-### Student Role
-- Register and log in  
-- Create or join groups using unique group codes  
-- Add group members via email (creator-only)  
-- View all assignments posted by professors  
-- Access OneDrive links for submissions  
-- Mark assignments as submitted (frontend simulation)  
-- View group details and members in real time  
+This project uses **JWT (JSON Web Token)** for secure login.
 
-### Admin (Professor) Role
-- Create, edit, and view assignments (title, description, due date, OneDrive link)  
-- Assign work to all students or specific groups  
-- View group-wise and student-wise submissions  
-- Access analytics on submission completion and group performance *(planned)*  
+### Flow:
+
+1. User logs in  
+2. Backend validates credentials  
+3. Backend generates a signed JWT token  
+4. Frontend stores token in `localStorage`  
+5. Every protected API hit sends `Authorization: Bearer <token>`  
+6. Backend verifies token → allows access
 
 ---
 
@@ -77,87 +84,32 @@ Copy code
 ```
 cd frontend
 npm run dev
+
 ```
 
+---
+
+**UI FLOW IMAGES:**
 
 
-
-## 🚀 API Endpoints
-
-### 🔐 Authentication
-
-| Method | Endpoint | Description |
-|:------:|-----------|-------------|
-| **POST** | `/api/register` | Register a new user |
-| **POST** | `/api/login` | Login user and return token |
 
 ---
 
-### 👥 Groups
-
-| Method | Endpoint | Description |
-|:------:|-----------|-------------|
-| **POST** | `/api/groups` | Create a new group |
-| **POST** | `/api/groups/join` | Join group via code |
-| **GET** | `/api/groups/user/:userId` | Get user’s group |
-| **POST** | `/api/groups/add-member` | Add member by email (creator only) |
-| **GET** | `/api/admin/groups` | Fetch all groups (admin only) |
-
----
-
-### 📝 Assignments
-
-| Method | Endpoint | Description |
-|:------:|-----------|-------------|
-| **POST** | `/api/assignments` | Create new assignment |
-| **GET** | `/api/assignments` | Fetch all assignments |
-
----
-
-## 🗄 Database Schema (Prisma)
-
-```prisma
-model User {
-  id             Int       @id @default(autoincrement())
-  name           String
-  email          String    @unique
-  password       String
-  role           String
-  groupId        Int?
-  group          Group?    @relation("UserGroup", fields: [groupId], references: [id])
-  createdGroups  Group[]   @relation("CreatedGroups") 
-  createdAt      DateTime  @default(now())
-  Assignment     Assignment[]
-}
-
-model Group {
-  id          Int       @id @default(autoincrement())
-  name        String
-  code        String    @unique
-  creatorId   Int
-  createdAt   DateTime  @default(now())
-  members     User[]    @relation("UserGroup")
-  creator     User      @relation("CreatedGroups", fields: [creatorId], references: [id])  
-}
-
-model Assignment {
-  id          Int       @id @default(autoincrement())
-  title       String
-  description String?
-  deadline    DateTime
-  driveLink   String?
-  createdBy   Int
-  createdAt   DateTime  @default(now())
-  teacher     User      @relation(fields: [createdBy], references: [id])
-  status      String    @default("Active")
-}
-```
----
 **Relationships (ER Diagram)**
 ```
-  User (Admin)                                         
-   ├── creates ──> Group ─── has ───> Users (Students)  
-   └── creates ──> Assignment                           
+  src/
+ ├─ components/
+ │   ├─ Sidebar.jsx
+ │   ├─ Courses.jsx
+ │   ├─ Groups.jsx
+ │   └─ Profile.jsx
+ │
+ ├─ pages/
+ │   ├─ Auth.jsx
+ │   ├─ StudentDashboard.jsx
+ │   └─ TeacherDashboard.jsx
+ │
+ └─ App.jsx
 ```
 ---
 
@@ -179,20 +131,6 @@ model Assignment {
 
 ---
 
-**Flow Diagram**
-```
-[React Frontend]
-       │
-       ▼
-[Express.js API Server]
-       │
-       ▼
-[PostgreSQL Database]
-
-```
-
----
-
 ## 💡 Key Design & Deployment Decisions
 - **Prisma ORM** – ensures data integrity and smooth migrations  
 - **JWT Auth** – secure token-based authentication  
@@ -203,17 +141,14 @@ model Assignment {
 ---
 
 ## 🚧 Limitations & Future Scope
-Due to time constraints, some planned features couldn’t be added but are intended for future implementation:
-- Persistent assignment submission tracking  
+Due to time constraints, some planned features couldn’t be added but are intended for future implementation:  
 - Email notifications for member additions  
 - Analytics dashboard for admins  
 - Multi-admin workflow  
-- Cloud deployment (**Vercel + Render** integration)  
 
 ---
 
 ## 👩‍💻 Author
 **Developed by:** Namita Mehra  
-**Role:** Full Stack Developer  
-**Institution:** Shaheed Sukhdev College of Business Studies  
-**License:** MIT
+**Role:** Full Stack Developer   
+**Institution:** Shaheed Sukhdev College of Business studies.
