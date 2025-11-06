@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
 import { PlusCircle, FileText, Users, Activity } from "lucide-react";
 import Profile from "../components/Profile";
+import Courses from "../components/Courses";
 import AdminGroups from "../components/AdminGroups";
 import axios from "axios";
 import { Toaster, toast } from "sonner";

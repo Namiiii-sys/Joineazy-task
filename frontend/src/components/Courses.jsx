@@ -8,7 +8,7 @@ export default function Courses({ role }) {
 
   useEffect(() => {
     fetchCourses();
-  });
+  },[]);
 
   const fetchCourses = async () => {
     try {
@@ -24,9 +24,16 @@ export default function Courses({ role }) {
               },
               {
                 id: 2,
-                name: "Operating Systems",
-                code: "DS202",
-                studentCount: 25,
+                name: "Data Mining",
+                code: "WD101",
+                studentCount: 28,
+                submissionRate: 75,
+              },
+              {
+                id: 3,
+                name: "DBMS",
+                code: "DS203",
+                studentCount: 30,
                 submissionRate: 67,
               },
             ]
@@ -85,6 +92,10 @@ export default function Courses({ role }) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: index * 0.05 }}
               className="bg-white rounded-2xl shadow-md p-6 border border-gray-100 hover:shadow-lg transition cursor-pointer"
+              onClick={() => {
+               localStorage.setItem("activeTab","assignments");
+               window.location.reload();
+            }}
             >
               <h3 className="text-xl font-bold text-gray-800 mb-2">
                 {course.name}
