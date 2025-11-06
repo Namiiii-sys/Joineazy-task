@@ -18,7 +18,7 @@ export default function Courses({ role, onCourseClick }) {
 
   const fetchCourses = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/courses");
+      const res = await axios.get("http://https://joineazy-backend.vercel.app/api/courses");
       setCourses(Array.isArray(res.data) ? res.data : res.data.courses || []);
       setLoading(false);
     } catch (err) {
@@ -33,7 +33,7 @@ export default function Courses({ role, onCourseClick }) {
     if (!form.name || !form.code) return toast.error("Fill all fields");
 
     try {
-      await axios.post("http://localhost:5000/api/courses", {
+      await axios.post("http://https://joineazy-backend.vercel.app/api/courses", {
         ...form,
         teacherId
       });
@@ -51,7 +51,7 @@ export default function Courses({ role, onCourseClick }) {
   const deleteCourse = async (id, e) => {
     e.stopPropagation();
     try {
-      await axios.delete(`http://localhost:5000/api/courses/${id}`);
+      await axios.delete(`http://https://joineazy-backend.vercel.app/api/courses/${id}`);
       toast.success("Deleted!");
       fetchCourses();
     } catch (err) {

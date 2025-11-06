@@ -21,7 +21,7 @@ const userId = parseInt(localStorage.getItem("userId"));
 
 const fetchAssignments = useCallback(async () => {
   try {
-    const res = await axios.get("http://localhost:5000/api/assignments");
+    const res = await axios.get("http://https://joineazy-backend.vercel.app/api/assignments");
     const grouped = res.data.reduce((acc, a) => {
       const course = a.course ? a.course.name : "General Course";
       if (!acc[course]) acc[course] = [];
@@ -36,7 +36,7 @@ const fetchAssignments = useCallback(async () => {
 
 const fetchSubmissions = useCallback(async () => {
   try {
-    const res = await axios.get(`http://localhost:5000/api/submissions/${userId}`);
+    const res = await axios.get(`http://https://joineazy-backend.vercel.app/api/submissions/${userId}`);
     setSubmissions(res.data); 
   } catch (err) {
     console.error("Error fetching submissions:", err);
@@ -46,7 +46,7 @@ const fetchSubmissions = useCallback(async () => {
 
 const checkIfLeader = useCallback(async () => {
   try {
-    const res = await axios.get(`http://localhost:5000/api/groups/user/${userId}`);
+    const res = await axios.get(`http://https://joineazy-backend.vercel.app/api/groups/user/${userId}`);
     if (res.data.group && res.data.group.creatorId === userId) {
       setIsLeader(true);
     } else {
@@ -68,7 +68,7 @@ useEffect(() => {
   if (!driveLink.trim()) return toast.error("Please enter your Drive link");
 
   try {
-    const res = await axios.post("http://localhost:5000/api/submissions", {
+    const res = await axios.post("http://https://joineazy-backend.vercel.app/api/submissions", {
       studentId: userId,
       assignmentId: selectedAssignment.id,
       driveLink,

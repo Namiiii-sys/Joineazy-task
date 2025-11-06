@@ -31,7 +31,7 @@ export default function TeacherDashboard() {
 
   const fetchCourses = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/courses", {
+      const res = await axios.get("http://https://joineazy-backend.vercel.app/api/courses", {
         params: { teacherId },
       });
       setCourses(res.data.courses || []);
@@ -42,7 +42,7 @@ export default function TeacherDashboard() {
 
   const fetchAssignments = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/assignments");
+      const res = await axios.get("http://https://joineazy-backend.vercel.app/api/assignments");
       // adding dummy analytics for visuals
       const dataWithAnalytics = (res.data || []).map((a) => ({
         ...a,
@@ -64,7 +64,7 @@ export default function TeacherDashboard() {
     }
 
     try {
-      await axios.delete(`http://localhost:5000/api/assignments/${assignmentId}`);
+      await axios.delete(`http://https://joineazy-backend.vercel.app/api/assignments/${assignmentId}`);
       toast.success("Assignment deleted successfully!");
       fetchAssignments();
     } catch (err) {
@@ -86,7 +86,7 @@ export default function TeacherDashboard() {
       return;
     }
     try {
-      await axios.post("http://localhost:5000/api/assignments", {
+      await axios.post("http://https://joineazy-backend.vercel.app/api/assignments", {
         title: newAssignment.title,
         description: "Uploaded through dashboard",
         deadline: newAssignment.deadline,
