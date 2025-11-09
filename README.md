@@ -1,4 +1,4 @@
-# Joineazy - Group-based Assignment Management System
+#Group-based Assignment Management System
 
 
 
